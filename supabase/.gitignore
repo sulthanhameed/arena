@@ -1,0 +1,9 @@
+# Supabase CLI local state
+.branches
+.temp
+.env
+.env.local
+
+# Local Postgres data / logs produced by `supabase start`
+**/.docker
+*.log

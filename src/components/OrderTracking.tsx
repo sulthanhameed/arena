@@ -2,6 +2,9 @@ import { useState } from "react";
 import { CheckIcon, ChefIcon, TruckIcon } from "./Icons";
 import SectionHeading from "./SectionHeading";
 import Reveal from "./Reveal";
+import { ordersApi, type KhangTracking } from "../lib/api";
+import { isSupabaseConfigured } from "../lib/supabase";
+import type { OrderStatus } from "../types/database.types";
 
 const STAGES = [
   { label: "Received", desc: "We got your order", icon: "📝" },
@@ -10,17 +13,61 @@ const STAGES = [
   { label: "Delivered", desc: "Enjoy your meal", icon: "🥢" },
 ];
 
+const STAGE_INDEX: Record<OrderStatus, number> = {
+  received: 0,
+  preparing: 1,
+  out_for_delivery: 2,
+  delivered: 3,
+  cancelled: 0,
+};
+
+function eta(info: KhangTracking | null): string {
+  if (!info?.estimated_delivery) return "ETA · 25–35 min";
+  if (info.status === "delivered") return "Delivered";
+  const mins = Math.round((+new Date(info.estimated_delivery) - Date.now()) / 60000);
+  return mins > 0 ? `ETA · ${mins} min` : "Arriving any moment";
+}
+
 export default function OrderTracking() {
   const [orderId, setOrderId] = useState("");
   const [tracking, setTracking] = useState(false);
   const [stage, setStage] = useState(0);
+  const [info, setInfo] = useState<KhangTracking | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const track = () => {
-    if (!orderId.trim()) return;
+  /** Replays the demo animation when there is no Supabase project wired up. */
+  const simulate = () => {
+    setInfo(null);
     setTracking(true);
     setStage(0);
     for (let i = 1; i <= 3; i++) {
       window.setTimeout(() => setStage(i), i * 1500);
+    }
+  };
+
+  const track = async () => {
+    if (!orderId.trim()) return;
+    setError(null);
+
+    if (!isSupabaseConfigured) {
+      simulate();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Public RPC — no sign-in required, returns status only (never the address)
+      const result = await ordersApi.track(orderId.trim());
+      setInfo(result);
+      setStage(STAGE_INDEX[result.status] ?? 0);
+      setTracking(true);
+    } catch (err) {
+      setInfo(null);
+      setTracking(false);
+      setError(err instanceof Error ? err.message : "Order not found");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,12 +104,18 @@ export default function OrderTracking() {
                 />
               </div>
               <button
-                onClick={track}
-                className="rounded-full bg-khang-ink px-8 py-4 font-display text-[12px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-khang-red"
+                onClick={() => void track()}
+                disabled={loading}
+                className="rounded-full bg-khang-ink px-8 py-4 font-display text-[12px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-khang-red disabled:opacity-50"
               >
-                Track Order
+                {loading ? "Checking…" : "Track Order"}
               </button>
             </div>
+            {error && (
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 font-mono text-[11px] uppercase tracking-[0.15em] text-red-600">
+                {error}
+              </div>
+            )}
           </div>
 
           {/* Body */}
@@ -83,8 +136,13 @@ export default function OrderTracking() {
                       Order
                     </div>
                     <div className="mt-1 font-mono text-base font-semibold tracking-[0.1em] text-khang-ink">
-                      #{orderId.toUpperCase()}
+                      #{(info?.order_number ?? orderId).toUpperCase()}
                     </div>
+                    {info?.customer_name && (
+                      <div className="mt-1 font-body text-[13px] text-zinc-500">
+                        {info.customer_name} · ₹{info.total}
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
                     <div className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600">
@@ -95,7 +153,7 @@ export default function OrderTracking() {
                       Live
                     </div>
                     <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-khang-ink/40">
-                      ETA · 25–35 min
+                      {eta(info)}
                     </div>
                   </div>
                 </div>
@@ -165,7 +223,10 @@ export default function OrderTracking() {
                       {STAGES[stage].label}
                     </div>
                     <div className="mt-0.5 font-body text-[13px] font-light leading-relaxed text-zinc-500">
-                      {STAGES[stage].desc} · Estimated 25–35 min
+                      {info?.tracking?.length
+                        ? (info.tracking[info.tracking.length - 1].note ?? STAGES[stage].desc)
+                        : STAGES[stage].desc}{" "}
+                      · {eta(info)}
                     </div>
                   </div>
                 </div>

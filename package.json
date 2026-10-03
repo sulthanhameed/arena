@@ -6,9 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:seed": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > src/types/database.types.ts",
+    "functions:serve": "supabase functions serve --env-file supabase/.env",
+    "functions:deploy": "supabase functions deploy"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.117.2",
     "clsx": "2.1.1",
     "react": "19.2.6",
     "react-dom": "19.2.6",

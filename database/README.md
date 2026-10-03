@@ -1,80 +1,140 @@
-# 🗄 Khang Database
+# 🗄 Khang Database — Supabase / PostgreSQL
 
-> MongoDB schemas, seed data, indexes, and ER diagram for the Khang Chinese Restaurant.
+> Postgres schema, Row Level Security, seed data, indexes and ER diagram for
+> the Khang Chinese Restaurant.
 
-## 📁 Contents
+**The source of truth lives in [`/supabase`](../supabase/).** This folder is
+the documentation and the operational scripts around it.
 
 ```
-database/
-├── README.md                ← you are here
-├── schema/                  # JSON Schema definitions for every collection
-│   ├── users.schema.json
-│   ├── categories.schema.json
-│   ├── products.schema.json
-│   ├── orders.schema.json
-│   └── reviews.schema.json
-├── seed/                    # Initial data
-│   ├── categories.json      # 5 categories
-│   ├── products.json        # 18 dishes
-│   └── admin-user.json      # admin@khang.com / admin123
-├── migrations/              # Versioned schema updates
-│   └── 001-initial.js       # Creates indexes
-├── scripts/
-│   ├── seed.sh              # Run seed via Docker / mongosh
-│   └── backup.sh            # Daily backup helper
-└── docs/
-    ├── ER-DIAGRAM.md        # Entity relationships
-    └── INDEXES.md           # All index definitions
+supabase/                        ← source of truth (applied by the CLI)
+├── config.toml                  # local stack + per-function JWT settings
+├── migrations/
+│   ├── 20260101000000_initial_schema.sql     # tables, enums, indexes
+│   ├── 20260101000100_functions_triggers.sql # triggers, auth hook
+│   ├── 20260101000200_api_functions.sql      # RPC "endpoints"
+│   └── 20260101000300_rls_policies.sql       # Row Level Security
+├── seed.sql                     # 5 categories · 17 dishes · admin user
+└── functions/                   # Deno Edge Functions (payments, notifications)
+
+database/                        ← you are here
+├── README.md
+├── docs/
+│   ├── ER-DIAGRAM.md            # tables, columns, foreign keys
+│   ├── INDEXES.md               # every index and why it exists
+│   └── RLS-POLICIES.md          # the authorisation model
+└── scripts/
+    ├── reset.sh                 # rebuild the local DB from migrations + seed
+    └── backup.sh                # pg_dump / `supabase db dump` helper
 ```
 
-## 🚀 Quick Setup
+## 🚀 Quick setup
 
-### Option A — Local MongoDB (Docker)
+### Option A — Local stack (Docker, via the Supabase CLI)
+
 ```bash
-docker run -d --name khang-mongo -p 27017:27017 -v khang-data:/data/db mongo:7
+npm install -g supabase        # or: brew install supabase/tap/supabase
+supabase start                 # Postgres + Auth + PostgREST + Studio + Storage
+supabase db reset              # applies migrations/ then seed.sql
 ```
 
-### Option B — MongoDB Atlas (cloud, free tier)
-1. Create a free M0 cluster at https://www.mongodb.com/atlas
-2. Network Access → Allow IP `0.0.0.0/0` (or your IP)
-3. Database Access → create a user
-4. Get the connection string and put it in `backend/.env` as `MONGO_URI`
+| Service | URL |
+|---|---|
+| API (PostgREST) | http://127.0.0.1:54321 |
+| Studio (GUI) | http://127.0.0.1:54323 |
+| Inbucket (catches emails) | http://127.0.0.1:54324 |
+| Postgres | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
 
-### Seed the database
+`supabase start` prints the local `anon` key — put it in `.env` as
+`VITE_SUPABASE_ANON_KEY`.
+
+### Option B — Hosted project (free tier)
+
+1. Create a project at <https://supabase.com/dashboard>
+2. Link and push:
+
 ```bash
-# from the repo root
-cd backend
-npm run seed          # uses ../database/seed/*.json
+supabase link --project-ref <your-project-ref>
+supabase db push                                    # runs every migration
+psql "$SUPABASE_DB_URL" -f supabase/seed.sql        # optional: load the menu
 ```
 
-## 🗺️ Entity Relationships
+3. Copy **Project URL** and **anon public** key from
+   *Project Settings → API* into `.env`.
 
-```
-┌──────────┐         ┌─────────┐
-│  Users   │◄────────┤ Orders  │  (one user → many orders)
-└──────────┘         └─────────┘
-     │                    │
-     │                    └──> items[].product → Products
-     │
-     └────────►  Reviews ────►  Products
-                              ◄──── Categories (via category name)
-```
+## 🔐 Security model
 
-See `docs/ER-DIAGRAM.md` for full details.
+Authorisation is in the database, not in a middleware function, so it holds
+for every client — web, mobile, curl.
 
-## 📊 Collections Summary
+| Old Express middleware | New Postgres equivalent |
+|---|---|
+| `protect` (verify JWT) | Supabase Auth + `auth.uid()` inside RLS policies |
+| `adminOnly` | `public.is_admin()` used by policies and RPCs |
+| "never trust client prices" comment | `create_order()` is `SECURITY DEFINER` and there is **no INSERT policy** on `orders` |
+| bcrypt hashing in a model hook | `auth.users.encrypted_password`, managed by Supabase |
 
-| Collection | Documents (seed) | Key Indexes |
+See [`docs/RLS-POLICIES.md`](docs/RLS-POLICIES.md) for the full policy list.
+
+## 📊 Tables
+
+| Table | Rows (seed) | Key constraints |
 |---|---|---|
-| `users` | 1 (admin) | `email` (unique) |
-| `categories` | 5 | `slug` (unique), `sortOrder` |
-| `products` | 18 | `slug` (unique), text index on name/description, `featured` |
-| `orders` | 0 | `orderId` (unique), `user`, `status`, `payment.status` |
-| `reviews` | 0 | `(user, product)` unique compound, `product` |
+| `profiles` | 1 (admin) | PK → `auth.users(id)`, unique `lower(email)` |
+| `categories` | 5 | unique `name`, unique `slug` |
+| `products` | 17 | unique `slug`, unique `code`, FK → `categories` |
+| `orders` | 0 | unique `order_number`, FK → `profiles` |
+| `order_items` | 0 | FK → `orders` (cascade), FK → `products` (set null) |
+| `order_tracking` | 0 | FK → `orders` (cascade) |
+| `reviews` | 0 | unique `(user_id, product_id)` |
+| `favourites` | 0 | PK `(user_id, product_id)` |
 
-## 🔧 Used by
+## 🧩 RPC "endpoints"
 
-The backend Mongoose models in `/backend/src/models/` correspond 1:1 with
-the schemas in `database/schema/`. Mongoose schemas are the source of truth
-at runtime; the JSON Schema files here are kept for documentation,
-validation tooling, and reference.
+Called from the browser with `supabase.rpc(...)`:
+
+| Function | Replaces | Who can call it |
+|---|---|---|
+| `create_order(items, address, customer, payment_method)` | `POST /api/orders` | authenticated |
+| `track_order(order_number)` | `GET /api/orders/track/:id` | anyone (anon) |
+| `set_order_status(order_id, status, note)` | `PUT /api/orders/:id/status` | admin |
+| `submit_review(product, rating, text, location)` | `POST /api/reviews` | authenticated |
+| `toggle_favourite(product)` | — | authenticated |
+| `admin_order_stats()` | dashboard header | admin |
+| `mark_order_paid(...)` | payment capture | `service_role` only |
+
+## 🔁 Day-to-day commands
+
+```bash
+npm run db:start       # supabase start
+npm run db:reset       # re-apply migrations + seed  (destroys local data)
+npm run db:push        # push migrations to the linked hosted project
+npm run db:types       # regenerate src/types/database.types.ts
+./database/scripts/backup.sh    # dump the database
+```
+
+### Creating a new migration
+
+```bash
+supabase migration new add_loyalty_points
+# edit supabase/migrations/<timestamp>_add_loyalty_points.sql
+supabase db reset      # verify locally
+supabase db push       # ship it
+```
+
+Never edit an already-pushed migration — add a new one.
+
+## 👤 Admin account
+
+`supabase/seed.sql` creates a real Supabase Auth user:
+
+```
+admin@khang.com / admin123     ⚠ change this before going live
+```
+
+On a hosted project, create the user in
+*Dashboard → Authentication → Users* and then promote it:
+
+```sql
+update public.profiles set role = 'admin' where email = 'you@example.com';
+```

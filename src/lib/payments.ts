@@ -1,6 +1,13 @@
 /**
- * High-level payment orchestrator — handles Razorpay / Stripe / COD flows
- * by calling the backend, then opening the appropriate gateway widget.
+ * High-level checkout orchestrator.
+ *
+ *   1. rpc('create_order')  → Postgres prices the cart and returns the order
+ *   2. COD                  → done (an Edge Function sends the confirmation)
+ *      UPI / Wallet / Card  → Edge Function creates the gateway order,
+ *                             the widget opens, then the signature is
+ *                             verified by another Edge Function
+ *
+ * No Express server, no Render instance — just Supabase.
  */
 import { ordersApi, paymentsApi, type CreateOrderBody } from "./api";
 import { openRazorpayCheckout } from "./razorpay";
@@ -11,68 +18,57 @@ export interface PaymentResult {
   error?: string;
 }
 
-/**
- * Full checkout flow:
- *   1. Create an order on the backend (server recalculates totals)
- *   2. Depending on payment method, either:
- *      • COD → done
- *      • UPI/Wallet → Razorpay popup
- *      • Card → Stripe (handled separately if Stripe.js is wired)
- */
 export async function runCheckout(body: CreateOrderBody): Promise<PaymentResult> {
   try {
-    // 1. Create the order on backend
-    const { order } = await ordersApi.create(body);
+    // 1 ── Create the order (totals calculated inside the database)
+    const order = await ordersApi.create(body);
 
-    // 2. COD — instant success, no payment widget
+    // 2 ── Cash on delivery: confirmed immediately
     if (body.paymentMethod === "cod") {
-      return { success: true, orderId: order.orderId };
+      // Fire-and-forget email/SMS — never block the success screen on it
+      paymentsApi.notify(order.order_number).catch(() => {});
+      return { success: true, orderId: order.order_number };
     }
 
-    // 3. Razorpay flow (UPI / Wallet / Card via Razorpay)
-    if (body.paymentMethod === "upi" || body.paymentMethod === "wallet" || body.paymentMethod === "card") {
-      const init = await paymentsApi.createRazorpayOrder(order.orderId);
+    // 3 ── Razorpay (UPI / wallet / card)
+    const init = await paymentsApi.createRazorpayOrder(order.order_number);
 
-      return new Promise<PaymentResult>((resolve) => {
-        openRazorpayCheckout({
-          key: init.key,
-          amount: init.amount,
-          currency: init.currency,
-          name: "Khang Restaurant",
-          description: `Order ${init.orderId}`,
-          order_id: init.razorpayOrderId,
-          prefill: {
-            name: init.customer?.name,
-            email: init.customer?.email,
-            contact: init.customer?.phone,
-          },
-          theme: { color: "#15803d" },
-          notes: { khangOrderId: init.orderId },
-          handler: async (resp) => {
-            try {
-              await paymentsApi.verifyRazorpay({
-                ...resp,
-                orderId: init.orderId,
-              });
-              resolve({ success: true, orderId: init.orderId });
-            } catch (err) {
-              resolve({
-                success: false,
-                error: err instanceof Error ? err.message : "Verification failed",
-              });
-            }
-          },
-          modal: {
-            ondismiss: () =>
-              resolve({ success: false, error: "Payment cancelled" }),
-          },
-        }).catch((err) =>
-          resolve({ success: false, error: err.message }),
-        );
-      });
-    }
-
-    return { success: false, error: "Unsupported payment method" };
+    return await new Promise<PaymentResult>((resolve) => {
+      openRazorpayCheckout({
+        key: init.key,
+        amount: init.amount,
+        currency: init.currency,
+        name: "Khang Restaurant",
+        description: `Order ${init.order_number}`,
+        order_id: init.razorpay_order_id,
+        prefill: {
+          name: init.customer?.name ?? undefined,
+          email: init.customer?.email ?? undefined,
+          contact: init.customer?.phone ?? undefined,
+        },
+        theme: { color: "#15803d" },
+        notes: { khang_order_number: init.order_number },
+        handler: async (resp) => {
+          try {
+            await paymentsApi.verifyRazorpay({
+              razorpay_order_id: resp.razorpay_order_id,
+              razorpay_payment_id: resp.razorpay_payment_id,
+              razorpay_signature: resp.razorpay_signature,
+              order_number: init.order_number,
+            });
+            resolve({ success: true, orderId: init.order_number });
+          } catch (err) {
+            resolve({
+              success: false,
+              error: err instanceof Error ? err.message : "Verification failed",
+            });
+          }
+        },
+        modal: {
+          ondismiss: () => resolve({ success: false, error: "Payment cancelled" }),
+        },
+      }).catch((err: Error) => resolve({ success: false, error: err.message }));
+    });
   } catch (err) {
     return {
       success: false,
