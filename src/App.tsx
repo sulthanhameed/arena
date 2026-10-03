@@ -19,6 +19,10 @@ import SearchModal from "./components/SearchModal";
 import AuthModal from "./components/AuthModal";
 import AdminDashboard from "./components/AdminDashboard";
 import ScrollProgressBar from "./components/ScrollProgressBar";
+import IntroCurtain, {
+  shouldSkipIntro,
+  type IntroPhase,
+} from "./components/IntroCurtain";
 import { CartIcon } from "./components/Icons";
 
 function FloatingCartButton() {
@@ -76,10 +80,26 @@ function Shell() {
 }
 
 export default function App() {
+  // Mirrors the intro's own decision so the page is never needlessly held back.
+  const [introPhase, setIntroPhase] = useState<IntroPhase>(() =>
+    shouldSkipIntro() ? "done" : "playing",
+  );
+
+  // While the curtain is up the site sits blurred and scaled up behind it.
+  // The class is dropped entirely afterwards — a lingering `transform` would
+  // become the containing block for the fixed navbar, cart button and modals.
+  const stageClass =
+    introPhase === "done"
+      ? undefined
+      : `intro-stage${introPhase === "exiting" ? " is-opening" : ""}`;
+
   return (
     <AuthProvider>
       <CartProvider>
-        <Shell />
+        <div className={stageClass}>
+          <Shell />
+        </div>
+        <IntroCurtain onPhaseChange={setIntroPhase} />
       </CartProvider>
     </AuthProvider>
   );
