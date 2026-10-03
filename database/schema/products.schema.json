@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Product",
+  "description": "A menu item (dish, drink, etc.)",
+  "type": "object",
+  "required": ["name", "slug", "category", "price", "description", "image"],
+  "properties": {
+    "_id": { "type": "string" },
+    "name": { "type": "string", "maxLength": 200 },
+    "chineseName": { "type": "string", "description": "Traditional Chinese characters" },
+    "slug": { "type": "string", "description": "URL slug, unique" },
+    "category": {
+      "type": "string",
+      "description": "Category name (denormalised for fast filtering)"
+    },
+    "price": { "type": "number", "minimum": 0, "description": "Price in INR (₹)" },
+    "description": { "type": "string" },
+    "ingredients": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "image": { "type": "string", "format": "uri", "description": "Primary product image" },
+    "images": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "description": "Optional gallery"
+    },
+    "rating": { "type": "number", "minimum": 0, "maximum": 5, "default": 4.5 },
+    "reviewsCount": { "type": "integer", "minimum": 0, "default": 0 },
+    "spicy": {
+      "type": "integer",
+      "enum": [0, 1, 2, 3],
+      "default": 0,
+      "description": "Spice level 0–3"
+    },
+    "veg": { "type": "boolean", "default": true },
+    "featured": { "type": "boolean", "default": false },
+    "prepTime": { "type": "string", "default": "15 min" },
+    "inStock": { "type": "boolean", "default": true },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

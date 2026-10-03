@@ -1,0 +1,420 @@
+@import "tailwindcss";
+
+@theme {
+  /* Green / White / Black palette */
+  --color-khang-red: #15803d;          /* primary deep green */
+  --color-khang-red-dark: #064e2e;     /* darker forest green */
+  --color-khang-jade: #16a34a;         /* accent jade */
+  --color-khang-gold: #ffffff;         /* white accent */
+  --color-khang-gold-dark: #1f1f1f;    /* near-black for labels */
+  --color-khang-bg: #ffffff;           /* clean white background */
+  --color-khang-ink: #0a0a0a;          /* near-black text */
+
+  /* Modern typography system */
+  --font-brush: "Playfair Display", "Cormorant Garamond", serif;   /* elegant headlines */
+  --font-display: "Outfit", "Manrope", sans-serif;                  /* modern display */
+  --font-body: "Manrope", "Inter", sans-serif;                      /* clean body */
+  --font-mono: "Space Grotesk", "Manrope", sans-serif;              /* labels / tags */
+  --font-cn: "Ma Shan Zheng", "ZCOOL XiaoWei", serif;               /* Chinese script */
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.7;
+  letter-spacing: 0.005em;
+  background-color: var(--color-khang-bg);
+  color: var(--color-khang-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* ─── Typography utilities ─── */
+/* .font-brush = editorial serif headlines (Playfair) */
+.font-brush {
+  font-family: var(--font-brush);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+.font-brush.italic {
+  font-style: italic;
+}
+
+/* .font-display = modern geometric display (Outfit) */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* Body text — Manrope */
+.font-body {
+  font-family: var(--font-body);
+  letter-spacing: 0.005em;
+}
+
+/* Mono / label */
+.font-mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+/* Chinese characters */
+.font-cn {
+  font-family: var(--font-cn);
+  letter-spacing: 0.05em;
+}
+
+/* Reusable text rhythm helpers */
+.tracking-eyebrow {
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.tracking-display {
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.lead {
+  font-size: 1.075rem;
+  line-height: 1.75;
+  letter-spacing: 0.005em;
+  color: rgba(10, 10, 10, 0.72);
+  font-weight: 400;
+}
+
+/* Selection */
+::selection {
+  background: #15803d;
+  color: #ffffff;
+}
+
+/* ─── Minimal patterns ─── */
+.pattern-cny {
+  background-image: radial-gradient(circle at 1px 1px, rgba(10, 10, 10, 0.06) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+.pattern-grid {
+  background-image:
+    linear-gradient(rgba(10, 10, 10, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(10, 10, 10, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(10, 10, 10, 0.15), transparent);
+}
+
+/* ─── Minimal design utilities ─── */
+.hairline {
+  border-color: rgba(10, 10, 10, 0.08);
+}
+.hairline-strong {
+  border-color: rgba(10, 10, 10, 0.15);
+}
+
+.btn-ink {
+  background-color: #0a0a0a;
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+.btn-ink:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: #0a0a0a;
+  border: 1px solid rgba(10, 10, 10, 0.15);
+  transition: all 0.3s ease;
+}
+.btn-outline:hover {
+  border-color: #0a0a0a;
+  background-color: #0a0a0a;
+  color: #ffffff;
+}
+
+/* ─── Animations ─── */
+@keyframes float-lantern {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-14px) rotate(2deg); }
+}
+.animate-lantern {
+  animation: float-lantern 4s ease-in-out infinite;
+}
+
+@keyframes lantern-glow {
+  0%, 100% { box-shadow: 0 0 24px 4px rgba(255, 255, 255, 0.35), inset 0 0 30px rgba(6, 78, 46, 0.7); }
+  50% { box-shadow: 0 0 48px 12px rgba(255, 255, 255, 0.55), inset 0 0 40px rgba(6, 78, 46, 0.8); }
+}
+.animate-glow {
+  animation: lantern-glow 3s ease-in-out infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+.animate-marquee-slow {
+  animation: marquee 60s linear infinite;
+}
+.marquee-pause:hover {
+  animation-play-state: paused;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.8s ease-out both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out both;
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* ─── Floating food card animations ─── */
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(1.5deg); }
+}
+.animate-float-soft {
+  animation: float-soft 5s ease-in-out infinite;
+}
+
+@keyframes float-softer {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(-1.5deg); }
+}
+.animate-float-softer {
+  animation: float-softer 6s ease-in-out infinite;
+}
+
+@keyframes float-tilt {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-18px) rotate(2deg); }
+}
+.animate-float-tilt {
+  animation: float-tilt 7s ease-in-out infinite;
+}
+
+@keyframes orbit-cw {
+  from { transform: rotate(0deg) translateX(180px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(180px) rotate(-360deg); }
+}
+.animate-orbit-cw {
+  animation: orbit-cw 24s linear infinite;
+}
+
+@keyframes orbit-ccw {
+  from { transform: rotate(0deg) translateX(220px) rotate(0deg); }
+  to   { transform: rotate(-360deg) translateX(220px) rotate(360deg); }
+}
+.animate-orbit-ccw {
+  animation: orbit-ccw 32s linear infinite;
+}
+
+@keyframes drift-x {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(12px); }
+}
+.animate-drift-x {
+  animation: drift-x 6s ease-in-out infinite;
+}
+
+@keyframes glow-soft {
+  0%, 100% { box-shadow: 0 20px 50px rgba(6,78,46,0.15), 0 0 0 1px rgba(255,255,255,0.8); }
+  50% { box-shadow: 0 30px 70px rgba(6,78,46,0.25), 0 0 0 1px rgba(16,185,129,0.4); }
+}
+.animate-glow-soft {
+  animation: glow-soft 4s ease-in-out infinite;
+}
+
+/* ─── Scroll-triggered reveal animations ─── */
+
+/* Generic reveal base — gentle, quick */
+.sr {
+  opacity: 0;
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.6s ease;
+  will-change: opacity, transform, filter;
+}
+.sr.is-visible {
+  opacity: 1;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Variants — smaller initial offsets */
+.sr-up      { transform: translateY(18px); }
+.sr-down    { transform: translateY(-18px); }
+.sr-left    { transform: translateX(18px); }
+.sr-right   { transform: translateX(-18px); }
+.sr-zoom    { transform: scale(0.97); }
+.sr-blur    { filter: blur(4px); }
+.sr-fade    { /* opacity only */ }
+
+/* Image reveal: very subtle zoom + light blur out */
+.sr-image {
+  opacity: 0;
+  transform: scale(1.05);
+  filter: blur(3px);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.5s ease;
+}
+.sr-image.is-visible {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+}
+
+/* Word-by-word headline reveal — gentler lift, light blur */
+.sr-words .word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.3em);
+  filter: blur(2px);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.5s ease;
+}
+.sr-words.is-visible .word {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Video reveal: gentle fade + slight scale (NO clip-path — clip-path was
+   hiding the video when the observer didn't fire reliably) */
+.sr-video {
+  opacity: 0;
+  transform: scale(1.03);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sr-video.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Legacy class names — neutralised so old code keeps working */
+.reveal-clip,
+.image-ken-burns,
+.reveal-underline,
+.reveal-text .word,
+.image-reveal,
+.image-reveal img,
+.card-reveal {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+  clip-path: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sr, .sr-image, .sr-words .word, .sr-video {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    clip-path: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes steam {
+  0% { opacity: 0; transform: translateY(0) scale(1); }
+  50% { opacity: 0.7; }
+  100% { opacity: 0; transform: translateY(-40px) scale(1.6); }
+}
+.steam {
+  animation: steam 2.4s ease-out infinite;
+}
+
+/* Stagger helpers */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #ffffff; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #15803d, #064e2e);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: #064e2e; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Chinese cloud SVG mask sample */
+.brush-underline {
+  background-image: linear-gradient(90deg, transparent 5%, #15803d 5%, #0a0a0a 50%, #15803d 95%, transparent 95%);
+  background-repeat: no-repeat;
+  background-size: 100% 8px;
+  background-position: 0 100%;
+  padding-bottom: 4px;
+}

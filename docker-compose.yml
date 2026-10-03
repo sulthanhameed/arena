@@ -1,0 +1,43 @@
+# ─── Full-stack local dev with one command ─────────────────
+# Usage:  docker compose up
+#
+# Spins up:
+#   • MongoDB on :27017
+#   • Backend API on :5000
+#   • Auto-seeds the database on first start
+#
+# Add a `backend/.env` file with payment keys before running.
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: khang-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  api:
+    build: ./backend
+    container_name: khang-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      MONGO_URI: mongodb://mongo:27017/khang
+      CLIENT_URL: http://localhost:5173
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-in-prod}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    command: sh -c "node src/scripts/seed.js && node src/server.js"
+
+volumes:
+  mongo-data:

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Category",
+  "description": "A menu category like Dim Sum, Noodles, etc.",
+  "type": "object",
+  "required": ["name", "slug"],
+  "properties": {
+    "_id": { "type": "string" },
+    "name": { "type": "string", "description": "Display name, unique" },
+    "slug": { "type": "string", "description": "URL slug, lowercase, unique" },
+    "icon": { "type": "string", "description": "Emoji" },
+    "description": { "type": "string" },
+    "sortOrder": { "type": "integer", "default": 0 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}
