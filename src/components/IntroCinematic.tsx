@@ -5,18 +5,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *  Khang entrance film
  * ─────────────────────────────────────────────────────────────
  *
- *  A ten second film, authored frame by frame in tools/intro-film
+ *  A nine second film, authored frame by frame in tools/intro-film
  *  and encoded to public/intro/khang-entrance.mp4 (+ .webm):
  *
  *    0.0s  two guests at a table, close; one of them is talking
- *    1.3s  the other lifts a dumpling with his chopsticks
- *    1.9s  he takes the bite, and goes on chewing
+ *    1.4s  the other lifts a dumpling with his chopsticks
+ *    2.0s  he takes the bite, and goes on chewing
  *    2.8s  the camera begins to retreat, out through the window
  *    5.0s  the dining room, its lanterns and screens, come into view
- *    6.6s  the whole shopfront is in frame, and its board lights up
- *    6.8s  the Khang logo resolves on the sign above the doors
- *    8.2s  the street falls away and the logo steps forward alone
- *    9.65s the film hands the page over to the site
+ *    6.6s  the whole shopfront is in frame
+ *    7.0s  the board lights and the logo resolves on it — the green
+ *          roundel with 康, then KHANG and the descriptor
+ *    9.7s  the film hands the page over to the site
  *
  *  It is one continuous camera move and one continuous performance
  *  — the picture is video, not a slideshow, so this component is
@@ -43,10 +43,10 @@ const FILM_WEBM = "/intro/khang-entrance.webm";
 const FILM_POSTER = "/intro/poster.jpg";
 
 /** Length of the film, and the moment the hand-over begins. The exit
- *  overlaps the last held beat on the logo, so the site arrives while
- *  the mark is still up rather than after a dead pause. */
+ *  overlaps the last held beat on the sign, so the site arrives while
+ *  the logo is still up rather than after a dead pause. */
 const FILM_MS = 10000;
-const EXIT_AT = 9650;
+const EXIT_AT = 9700;
 const EXIT_MS = 900;
 
 /** If the first frame cannot be decoded and playing by now, the film

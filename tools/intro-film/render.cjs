@@ -9,7 +9,7 @@
  * single unbroken move until the entire shopfront is in view — no
  * cuts, no dissolves. The interior is drawn clipped to the glazing,
  * so the building closes around it naturally as the camera pulls out.
- * It closes on the Khang logo.
+ * It finishes on the brand lockup lit on the signboard.
  *
  * Usage:
  *   npm i @napi-rs/canvas
@@ -28,75 +28,68 @@ const DURATION = 10.0;
 const OUT = process.argv[2] || "/tmp/vid/frames";
 
 /* ── Palette ─────────────────────────────────────────────────── *
- * A warm Cantonese dining room at night — cream plaster, walnut,
- * red silk lanterns and celadon — against a deep green-black
- * street. Jade is the brand's own green and is kept for the logo,
- * the hairlines and one of the guests, so the film and the site
- * share a colour without the room looking painted to match.        */
+ * Warm lamplit room against a cool night street, with the brand's
+ * greens carried through the screens, the planting and the sign.   */
 
-/* room */
-const WALL = "#f0e4ce";
-const WALL_SH = "#e1d1b1";
-const WALL_DEEP = "#cdb995";
-const PAPER = "#f7eeda"; // screen paper
-const WOOD = "#6d472f"; // walnut
-const WOOD_D = "#4a2e1e";
-const WOOD_L = "#8d5f3d";
-const FLOOR = "#7d5035";
-const FLOOR_D = "#5d3a25";
+/* interior surfaces */
+const WALL = "#f4e6c9"; // warm plaster, lit
+const WALL_D = "#e7d3ab"; // plaster in shade
+const WALL_DD = "#d6bc8c";
+const PAPER = "#f6e7c4"; // lantern / screen paper
+const FLOOR = "#6d4527"; // timber floor
+const FLOOR_D = "#54331b";
+const FLOOR_L = "#8a5a33";
 
-/* things on the table */
-const BAMBOO = "#dcab6a";
-const BAMBOO_D = "#b07f42";
-const BAMBOO_L = "#eec489";
-const CELADON = "#a3c3ad";
-const CELADON_D = "#7d9f88";
-const DUMPLING = "#f4e5c8";
-const DUMPLING_D = "#ddc79f";
-const TEA = "#c08a3e";
+/* timber */
+const WOOD = "#8a5531";
+const WOOD_D = "#5d3719";
+const WOOD_L = "#aa7040";
 
-/* lanterns */
-const LANT = "#c0392b";
-const LANT_D = "#96271d";
-const LANT_L = "#d9594a";
-const BRASS = "#c9a227";
-const GLOW = "#f8dca6";
+/* brand greens */
+const GREEN = "#15803d";
+const GREEN_D = "#064e2e";
+const GREEN_DD = "#06361f";
+const JADE = "#16a34a";
+const JADE_L = "#4cbb7a";
+
+/* lamplight */
+const GLOW = "#ffd98a";
+const GLOW_D = "#efa93c";
+const LAMP = "#fff3d4";
+
+/* accents */
+const RED = "#b4392b"; // lacquer red
+const RED_D = "#8c2a1e";
+const GOLD = "#e3b668";
+const CREAM = "#faf4e8";
+const CELADON = "#dfe7d8";
 
 /* people */
-const SKIN_A = "#eabb92";
-const SKIN_A_SH = "#d19e76";
-const SKIN_B = "#d8a075";
-const SKIN_B_SH = "#bd855c";
-const HAIR_A = "#2b1d17";
-const HAIR_A_L = "#443025";
-const HAIR_B = "#1f1612";
-const HAIR_B_L = "#372922";
-const CLOTH_A = "#2f7d55"; // jade — the brand green, worn
-const CLOTH_A_D = "#24613f";
-const CLOTH_B = "#3b4350"; // charcoal indigo
-const CLOTH_B_D = "#2c333d";
-const COLLAR = "#f3ead9";
-const LIP = "#a35b50";
-const LIP_D = "#5e2e2b";
+const SKIN = "#eab489";
+const SKIN_D = "#d4946b";
+const SKIN_DD = "#b4714a";
+const MOUTH = "#73302c";
+const TONGUE = "#bf5f58";
+const HAIR = "#2a1c14";
+const HAIR_L = "#4b3123";
+const NAVY = "#2e4257";
+const NAVY_D = "#22323f";
 
-/* night, street, building */
-const NIGHT_T = "#060a0c";
-const NIGHT_B = "#101a1c";
-const BUILD = "#1a2322";
-const BUILD_L = "#25312f";
-const BUILD_LL = "#30403d";
-const STREET = "#0b1012";
-const CREAM = "#f7f1e4";
-
-/* the brand */
-const JADE = "#15803d";
-const JADE_D = "#064e2e";
-const JADE_L = "#16a34a";
+/* night exterior */
+const NIGHT_T = "#060a11";
+const NIGHT_B = "#1a2533";
+const BUILD = "#15301f"; // deep green shopfront
+const BUILD_L = "#1d4229";
+const BUILD_LL = "#2a5637";
+const STREET = "#101720";
+const INK = "#1d2429";
 
 /* ── Geometry ────────────────────────────────────────────────── */
 // Shopfront glazing: the window the interior is seen through.
 const GLASS = { x: 430, y: 430, w: 1060, h: 450 };
 const GROUND = 880;
+// The signboard above the doors, and the lockup that lights on it.
+const BOARD = { x: 580, y: 282, w: 760, h: 142 };
 // Interior units → world units, and where the interior floor sits.
 const K = 0.41;
 const ORIGIN = { x: 960, y: GROUND };
@@ -123,7 +116,6 @@ function font(file, family) {
 font("MaShanZheng_400Regular.ttf", "KhangCn");
 font("PlayfairDisplay_600SemiBold.ttf", "KhangDisplay");
 font("Manrope_600SemiBold.ttf", "KhangSans");
-font("SpaceGrotesk_500Medium.ttf", "KhangMono");
 
 /* ── Small drawing helpers ───────────────────────────────────── */
 function limb(ctx, x1, y1, x2, y2, w, colour) {
@@ -151,21 +143,9 @@ function rrect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-/** #rrggbb at an arbitrary alpha — gradients need rgba stops. */
-function rgba(hex, a) {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-}
-
 function circle(ctx, x, y, r) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.closePath();
-}
-
-function ellipse(ctx, x, y, rx, ry, rot = 0) {
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
   ctx.closePath();
 }
 
@@ -189,200 +169,208 @@ function tracked(ctx, text, cx, y, spacing, perCharAlpha) {
   ctx.globalAlpha = base;
 }
 
-function trackedWidth(ctx, text, spacing) {
-  const chars = [...text];
-  return chars.reduce((a, c) => a + ctx.measureText(c).width + spacing, 0) - spacing;
-}
-
 /* ── The guests ──────────────────────────────────────────────── *
- * Seated three-quarter-profile figures, drawn in full colour so they
- * read as people rather than cut-outs: skin, hair, a visible eye and
- * brow, a profiled nose and lips, a mandarin collar over a coloured
- * jacket, and bare hands past the cuff.
+ * Seated profile characters, drawn facing right and mirrored by
+ * `dir`, so the whole head — features and all — flips as one.
  *
- * Everything is parametric so the poses can be driven frame by
- * frame — the jaw drops to speak and chew, the forearm swings a
- * dumpling up to the mouth, the torso breathes. Local origin is on
- * the floor directly beneath the figure.                            */
-
-/** The outline of a head in profile. `jaw` (0..1) drops the chin. */
-function headPath(ctx, R, dir, jaw) {
-  const X = (v) => dir * v * R;
-  const Y = (v) => v * R;
-  const j = jaw * 0.17;
-  ctx.beginPath();
-  ctx.moveTo(X(-0.1), Y(-1.0));
-  // forehead
-  ctx.bezierCurveTo(X(0.5), Y(-1.03), X(0.85), Y(-0.72), X(0.87), Y(-0.3));
-  // brow, then the dip at the bridge of the nose
-  ctx.bezierCurveTo(X(0.9), Y(-0.17), X(0.8), Y(-0.12), X(0.83), Y(-0.02));
-  // nose
-  ctx.bezierCurveTo(X(0.94), Y(0.04), X(1.03), Y(0.13), X(1.05), Y(0.2));
-  ctx.bezierCurveTo(X(1.03), Y(0.27), X(0.95), Y(0.26), X(0.86), Y(0.29));
-  // upper lip, mouth, lower lip
-  ctx.bezierCurveTo(X(0.92), Y(0.38 + j * 0.3), X(0.93), Y(0.52 + j * 0.7), X(0.82), Y(0.6 + j));
-  // chin and jaw
-  ctx.bezierCurveTo(X(0.8), Y(0.78 + j), X(0.62), Y(0.97 + j), X(0.3), Y(1.02 + j * 0.8));
-  ctx.bezierCurveTo(X(-0.18), Y(1.1), X(-0.88), Y(0.76), X(-0.93), Y(0.1));
-  // back of the skull
-  ctx.bezierCurveTo(X(-0.97), Y(-0.58), X(-0.6), Y(-1.0), X(-0.1), Y(-1.0));
-  ctx.closePath();
-}
-
+ * The head is rigged rather than redrawn: the skull and the jaw are
+ * separate pieces hinged near the ear, with the dark of the mouth
+ * behind them. Dropping the jaw a quarter of a radian is what reads,
+ * unmistakably, as talking and as chewing.                          */
 function drawHead(ctx, o) {
-  const { R, dir, jaw, skin, skinSh, hair, hairL, style } = o;
-  const X = (v) => dir * v * R;
-  const Y = (v) => v * R;
+  const { R, mouth, blink, hair, skin, skinD, hairColour } = o;
 
-  /* skin */
-  ctx.fillStyle = skin;
-  headPath(ctx, R, dir, jaw);
-  ctx.fill();
+  /* The head is ONE silhouette. The jaw is not a second shape laid
+     over the first — its control points are simply rotated about the
+     hinge before the outline is built, so there is no seam and no
+     tonal step to give the rig away. The open mouth is then cut back
+     into the face as a wedge between the two lip lines. */
+  const a = mouth * 0.3;
+  const HX = -0.55 * R;
+  const HY = 0.2 * R;
+  const ca = Math.cos(a);
+  const sa = Math.sin(a);
+  /** a point on the moving jaw */
+  const P = (x, y) => {
+    const dx = x * R - HX;
+    const dy = y * R - HY;
+    return [HX + dx * ca - dy * sa, HY + dx * sa + dy * ca];
+  };
+  /** a point on the fixed skull */
+  const S = (x, y) => [x * R, y * R];
 
-  /* the shaded side of the face, along the back of the jaw */
-  ctx.save();
-  headPath(ctx, R, dir, jaw);
-  ctx.clip();
-  const sh = ctx.createLinearGradient(X(-1.0), 0, X(0.3), 0);
-  sh.addColorStop(0, rgba(skinSh, 0.9));
-  sh.addColorStop(1, rgba(skinSh, 0));
-  ctx.fillStyle = sh;
-  ctx.fillRect(-R * 1.4, -R * 1.4, R * 2.8, R * 2.9);
-  ctx.restore();
-
-  /* ear, set back where an ear belongs and only just shaded */
-  ctx.fillStyle = skin;
-  ellipse(ctx, X(-0.44), Y(0.14), R * 0.13, R * 0.19, dir * 0.1);
-  ctx.fill();
-  ctx.strokeStyle = rgba(skinSh, 0.5);
-  ctx.lineWidth = R * 0.035;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(X(-0.4), Y(0.07));
-  ctx.quadraticCurveTo(X(-0.51), Y(0.14), X(-0.42), Y(0.21));
-  ctx.stroke();
-
-  /* brow */
-  ctx.strokeStyle = hair;
-  ctx.lineWidth = R * 0.095;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(X(0.43), Y(-0.33));
-  ctx.quadraticCurveTo(X(0.66), Y(-0.4), X(0.79), Y(-0.29));
-  ctx.stroke();
-
-  /* eye: lid line, iris, catchlight */
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.moveTo(X(0.49), Y(-0.1));
-  ctx.quadraticCurveTo(X(0.64), Y(-0.2), X(0.75), Y(-0.08));
-  ctx.quadraticCurveTo(X(0.63), Y(-0.02), X(0.49), Y(-0.1));
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#2a1d17";
-  ellipse(ctx, X(0.65), Y(-0.1), R * 0.072, R * 0.082);
-  ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  circle(ctx, X(0.69), Y(-0.13), R * 0.027);
-  ctx.fill();
-  /* upper lash */
-  ctx.strokeStyle = hair;
-  ctx.lineWidth = R * 0.055;
-  ctx.beginPath();
-  ctx.moveTo(X(0.45), Y(-0.11));
-  ctx.quadraticCurveTo(X(0.63), Y(-0.23), X(0.78), Y(-0.09));
-  ctx.stroke();
-
-  /* nostril + the crease beside the nose */
-  ctx.strokeStyle = skinSh;
-  ctx.lineWidth = R * 0.05;
-  ctx.beginPath();
-  ctx.moveTo(X(0.97), Y(0.24));
-  ctx.quadraticCurveTo(X(0.9), Y(0.27), X(0.88), Y(0.22));
-  ctx.stroke();
-
-  /* cheek */
-  ctx.fillStyle = "rgba(200,110,90,0.085)";
-  ellipse(ctx, X(0.46), Y(0.24), R * 0.17, R * 0.12);
-  ctx.fill();
-
-  /* mouth — a dark opening between the lips, which is what carries
-     speech and chewing on a face this size */
-  const open = jaw * R * 0.3;
-  const my = Y(0.47) + open * 0.45;
-  if (jaw > 0.04) {
-    ctx.fillStyle = LIP_D;
-    ctx.beginPath();
-    ctx.moveTo(X(0.6), my - open * 0.3);
-    ctx.quadraticCurveTo(X(0.82), my - open * 0.45, X(0.86), my);
-    ctx.quadraticCurveTo(X(0.8), my + open * 0.75, X(0.6), my + open * 0.45);
-    ctx.closePath();
+  /* hair behind the head */
+  if (hair === "bun") {
+    ctx.fillStyle = hairColour;
+    circle(ctx, -1.0 * R, -0.34 * R, 0.31 * R);
     ctx.fill();
-    /* a hint of teeth at the top of the opening */
-    ctx.fillStyle = "rgba(255,255,255,0.72)";
-    ctx.beginPath();
-    ctx.moveTo(X(0.62), my - open * 0.28);
-    ctx.quadraticCurveTo(X(0.82), my - open * 0.42, X(0.85), my - open * 0.02);
-    ctx.quadraticCurveTo(X(0.74), my - open * 0.12, X(0.62), my - open * 0.1);
-    ctx.closePath();
+    ctx.fillStyle = HAIR_L;
+    circle(ctx, -1.07 * R, -0.42 * R, 0.12 * R);
     ctx.fill();
-  } else {
-    ctx.strokeStyle = LIP;
-    ctx.lineWidth = R * 0.06;
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = 0.05 * R;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(X(0.62), Y(0.46));
-    ctx.quadraticCurveTo(X(0.78), Y(0.48), X(0.86), Y(0.43));
+    ctx.moveTo(-1.34 * R, -0.24 * R);
+    ctx.lineTo(-0.7 * R, -0.48 * R);
     ctx.stroke();
   }
 
-  /* hair, over the crown and down the back of the head */
-  ctx.fillStyle = hair;
-  if (style === "bun") {
+  /* ── the whole head, in one path ── */
+  ctx.beginPath();
+  ctx.moveTo(HX, HY);
+  ctx.quadraticCurveTo(...S(-1.02, -0.16), ...S(-0.9, -0.5)); // back of skull
+  ctx.quadraticCurveTo(...S(-0.66, -1.0), ...S(0.06, -1.04)); // crown
+  ctx.quadraticCurveTo(...S(0.74, -0.99), ...S(0.86, -0.52)); // brow ridge
+  ctx.quadraticCurveTo(...S(0.79, -0.38), ...S(0.83, -0.26)); // temple
+  ctx.quadraticCurveTo(...S(0.95, -0.15), ...S(1.02, -0.04)); // nose bridge
+  ctx.quadraticCurveTo(...S(1.1, 0.12), ...S(0.84, 0.14)); // nose tip
+  ctx.quadraticCurveTo(...S(0.75, 0.17), ...S(0.79, 0.23)); // philtrum
+  ctx.quadraticCurveTo(...S(0.84, 0.3), ...S(0.72, 0.34)); // upper lip
+  ctx.lineTo(...P(0.72, 0.34)); // the mouth opens here
+  ctx.quadraticCurveTo(...P(0.82, 0.42), ...P(0.76, 0.5)); // lower lip
+  ctx.quadraticCurveTo(...P(0.71, 0.56), ...P(0.73, 0.63)); // chin
+  ctx.quadraticCurveTo(...P(0.58, 0.79), ...P(0.28, 0.81));
+  ctx.quadraticCurveTo(...P(-0.16, 0.8), ...P(-0.48, 0.49)); // jawline
+  ctx.quadraticCurveTo(...P(-0.59, 0.35), HX, HY);
+  ctx.closePath();
+  ctx.fillStyle = skin;
+  ctx.fill();
+
+  /* shading down the far side — applied to the head as a whole */
+  ctx.save();
+  ctx.clip();
+  const sh = ctx.createLinearGradient(-R, 0, 0.45 * R, 0);
+  sh.addColorStop(0, skinD);
+  sh.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = sh;
+  ctx.fillRect(-1.3 * R, -1.3 * R, 2.6 * R, 2.6 * R);
+  /* and a little warmth on the cheek */
+  const bl = ctx.createRadialGradient(0.44 * R, 0.08 * R, 1, 0.44 * R, 0.08 * R, 0.36 * R);
+  bl.addColorStop(0, "rgba(201,106,76,0.24)");
+  bl.addColorStop(1, "rgba(201,106,76,0)");
+  ctx.fillStyle = bl;
+  ctx.fillRect(-1.3 * R, -1.3 * R, 2.6 * R, 2.6 * R);
+  ctx.restore();
+
+  /* ── the mouth, cut between the two lip lines ── */
+  const corner = [0.32, 0.296]; // on the hinge→lip line
+  const lipTop = [0.72, 0.34];
+  if (mouth > 0.015) {
     ctx.beginPath();
-    ctx.moveTo(X(0.86), Y(-0.34));
-    ctx.bezierCurveTo(X(0.78), Y(-0.86), X(0.3), Y(-1.2), X(-0.12), Y(-1.12));
-    ctx.bezierCurveTo(X(-0.72), Y(-1.02), X(-1.12), Y(-0.54), X(-1.0), Y(0.22));
-    ctx.bezierCurveTo(X(-0.96), Y(0.5), X(-0.86), Y(0.62), X(-0.8), Y(0.52));
-    ctx.bezierCurveTo(X(-0.92), Y(-0.1), X(-0.78), Y(-0.6), X(-0.34), Y(-0.74));
-    ctx.bezierCurveTo(X(0.1), Y(-0.88), X(0.62), Y(-0.72), X(0.86), Y(-0.34));
+    ctx.moveTo(...S(...corner));
+    ctx.lineTo(...S(...lipTop));
+    ctx.lineTo(...P(...lipTop));
+    ctx.lineTo(...P(...corner));
     ctx.closePath();
+    ctx.fillStyle = MOUTH;
     ctx.fill();
-    /* the bun itself, with a pin through it */
-    circle(ctx, X(-0.92), Y(-0.5), R * 0.33);
-    ctx.fill();
-    ctx.fillStyle = hairL;
+    if (mouth > 0.34) {
+      ctx.save();
+      ctx.clip();
+      ctx.fillStyle = TONGUE;
+      const [tx, ty] = P(0.44, 0.3);
+      ctx.beginPath();
+      ctx.ellipse(tx, ty, 0.26 * R, 0.1 * R, a, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  /* lips */
+  ctx.strokeStyle = SKIN_DD;
+  ctx.lineWidth = 0.04 * R;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(...S(...corner));
+  ctx.lineTo(...S(...lipTop));
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(...P(...corner));
+  ctx.lineTo(...P(...lipTop));
+  ctx.quadraticCurveTo(...P(0.82, 0.42), ...P(0.75, 0.49));
+  ctx.stroke();
+
+  /* ear */
+  ctx.fillStyle = skin;
+  ctx.beginPath();
+  ctx.ellipse(-0.24 * R, 0.0 * R, 0.13 * R, 0.18 * R, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = SKIN_DD;
+  ctx.lineWidth = 0.033 * R;
+  ctx.beginPath();
+  ctx.arc(-0.24 * R, 0.0 * R, 0.065 * R, -1.2, 1.8);
+  ctx.stroke();
+
+  /* eye */
+  if (blink > 0.5) {
+    ctx.strokeStyle = HAIR;
+    ctx.lineWidth = 0.05 * R;
     ctx.beginPath();
-    ctx.arc(X(-0.92), Y(-0.5), R * 0.33, Math.PI * 1.15, Math.PI * 1.75);
-    ctx.lineTo(X(-0.92), Y(-0.5));
-    ctx.fill();
-    ctx.strokeStyle = BRASS;
-    ctx.lineWidth = R * 0.055;
-    ctx.beginPath();
-    ctx.moveTo(X(-1.18), Y(-0.6));
-    ctx.lineTo(X(-0.66), Y(-0.43));
+    ctx.moveTo(0.42 * R, -0.12 * R);
+    ctx.quadraticCurveTo(0.57 * R, -0.06 * R, 0.69 * R, -0.12 * R);
     ctx.stroke();
   } else {
+    ctx.fillStyle = "#fdfaf3";
     ctx.beginPath();
-    ctx.moveTo(X(0.9), Y(-0.28));
-    ctx.bezierCurveTo(X(0.88), Y(-0.9), X(0.32), Y(-1.22), X(-0.16), Y(-1.12));
-    ctx.bezierCurveTo(X(-0.78), Y(-1.0), X(-1.08), Y(-0.5), X(-0.98), Y(0.3));
-    ctx.lineTo(X(-0.74), Y(0.34));
-    ctx.bezierCurveTo(X(-0.82), Y(-0.16), X(-0.74), Y(-0.56), X(-0.38), Y(-0.66));
-    ctx.bezierCurveTo(X(0.12), Y(-0.78), X(0.66), Y(-0.62), X(0.9), Y(-0.28));
+    ctx.moveTo(0.42 * R, -0.11 * R);
+    ctx.quadraticCurveTo(0.56 * R, -0.23 * R, 0.69 * R, -0.11 * R);
+    ctx.quadraticCurveTo(0.56 * R, -0.03 * R, 0.42 * R, -0.11 * R);
     ctx.closePath();
     ctx.fill();
-    /* a short sideburn in front of the ear */
-    ctx.fillStyle = hair;
-    rrectRot(ctx, X(-0.1), Y(-0.18), R * 0.16, R * 0.3);
+    ctx.fillStyle = HAIR;
+    circle(ctx, 0.605 * R, -0.115 * R, 0.075 * R);
+    ctx.fill();
+    ctx.strokeStyle = HAIR;
+    ctx.lineWidth = 0.042 * R;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(0.41 * R, -0.12 * R);
+    ctx.quadraticCurveTo(0.56 * R, -0.24 * R, 0.7 * R, -0.1 * R);
+    ctx.stroke();
   }
-  /* no highlight on the hair: at this size any sheen pale enough to
-     read as shine reads instead as a bald patch */
-}
 
-function rrectRot(ctx, x, y, w, h) {
-  rrect(ctx, x - w / 2, y - h / 2, w, h, w / 2);
+  /* brow */
+  ctx.strokeStyle = hairColour;
+  ctx.lineWidth = 0.075 * R;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(0.38 * R, -0.32 * R);
+  ctx.quadraticCurveTo(0.57 * R, -0.39 * R, 0.75 * R, -0.3 * R);
+  ctx.stroke();
+
+  /* ── hair over the skull: a real hairline, not a cap edge ── */
+  ctx.fillStyle = hairColour;
+  ctx.beginPath();
+  if (hair === "bun") {
+    ctx.moveTo(0.8 * R, -0.46 * R);
+    ctx.quadraticCurveTo(0.58 * R, -0.76 * R, 0.1 * R, -0.82 * R);
+    ctx.quadraticCurveTo(-0.44 * R, -0.82 * R, -0.72 * R, -0.44 * R);
+    ctx.quadraticCurveTo(-0.88 * R, -0.18 * R, -0.8 * R, 0.04 * R);
+    ctx.lineTo(-0.98 * R, 0.08 * R);
+    ctx.quadraticCurveTo(-1.14 * R, -0.2 * R, -0.98 * R, -0.58 * R);
+    ctx.quadraticCurveTo(-0.72 * R, -1.12 * R, 0.06 * R, -1.14 * R);
+    ctx.quadraticCurveTo(0.8 * R, -1.08 * R, 0.92 * R, -0.5 * R);
+  } else {
+    ctx.moveTo(0.86 * R, -0.44 * R);
+    ctx.quadraticCurveTo(0.66 * R, -0.62 * R, 0.3 * R, -0.68 * R);
+    ctx.quadraticCurveTo(-0.24 * R, -0.73 * R, -0.56 * R, -0.5 * R);
+    ctx.quadraticCurveTo(-0.8 * R, -0.3 * R, -0.78 * R, 0.0 * R);
+    ctx.lineTo(-0.98 * R, 0.06 * R);
+    ctx.quadraticCurveTo(-1.14 * R, -0.22 * R, -0.98 * R, -0.58 * R);
+    ctx.quadraticCurveTo(-0.72 * R, -1.12 * R, 0.06 * R, -1.14 * R);
+    ctx.quadraticCurveTo(0.82 * R, -1.08 * R, 0.94 * R, -0.5 * R);
+  }
+  ctx.closePath();
   ctx.fill();
+
+  /* a lit edge along the top of the hair */
+  ctx.strokeStyle = HAIR_L;
+  ctx.lineWidth = 0.055 * R;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-0.56 * R, -0.94 * R);
+  ctx.quadraticCurveTo(0.12 * R, -1.18 * R, 0.68 * R, -0.86 * R);
+  ctx.stroke();
 }
 
 function drawFigure(ctx, o) {
@@ -393,309 +381,270 @@ function drawFigure(ctx, o) {
     headTilt = 0, // radians
     lean = 0, // forward lean, units
     breath = 0,
+    blink = 0,
     hair = "bun",
     holding = 0, // dumpling scale at the chopstick tip
-    skin,
-    skinSh,
-    hairCol,
-    hairLCol,
-    cloth,
-    clothD,
+    cloth = RED,
+    clothD = RED_D,
+    trim = GOLD,
+    skin = SKIN,
+    skinD = SKIN_D,
   } = o;
 
+  ctx.save();
+  ctx.scale(dir, 1); // everything below is drawn facing right
+
   const HIP = { x: 0, y: -150 };
-  const SHO = { x: dir * 14 + lean, y: -340 + breath };
-  const HEAD = { x: dir * 26 + lean * 1.4, y: -424 + breath };
-  const R = 50;
+  const SHO = { x: 14 + lean, y: -358 + breath };
+  const HEAD = { x: 26 + lean * 1.4, y: -428 + breath };
+  const R = 56;
 
-  /* chair — walnut, behind and away from the table */
-  ctx.strokeStyle = WOOD_D;
-  ctx.lineWidth = 12;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(-dir * 96, -16);
-  ctx.lineTo(-dir * 104, -300);
-  ctx.stroke();
-  ctx.strokeStyle = WOOD;
-  ctx.lineWidth = 9;
-  ctx.beginPath();
-  ctx.moveTo(-dir * 101, -252);
-  ctx.lineTo(-dir * 62, -252);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(-dir * 100, -202);
-  ctx.lineTo(-dir * 64, -202);
-  ctx.stroke();
-  limb(ctx, -dir * 96, -150, dir * 10, -150, 11, WOOD_D);
+  /* chair: a plain hardwood side chair, seen from the side */
+  ctx.fillStyle = WOOD_D;
+  rrect(ctx, -112, -150, 12, 142, 4);
+  ctx.fill();
+  rrect(ctx, 16, -150, 12, 142, 4);
+  ctx.fill();
+  rrect(ctx, -108, -70, 132, 8, 3);
+  ctx.fill();
+  rrect(ctx, -116, -322, 14, 176, 5);
+  ctx.fill();
+  rrect(ctx, -130, -322, 44, 14, 5);
+  ctx.fill();
+  ctx.fillStyle = WOOD;
+  rrect(ctx, -120, -162, 152, 15, 4);
+  ctx.fill();
+  ctx.fillStyle = WOOD_L;
+  ctx.fillRect(-120, -162, 152, 3);
 
-  /* legs — trousers, then a shoe */
-  limb(ctx, HIP.x, HIP.y, dir * 74, -128, 31, clothD);
-  limb(ctx, dir * 74, -128, dir * 64, -14, 28, clothD);
-  ctx.fillStyle = "#23262b";
-  rrect(ctx, dir > 0 ? dir * 48 : dir * 48 - 44, -20, dir * 44, 20, 8);
+  /* legs */
+  limb(ctx, HIP.x, HIP.y, 74, -128, 31, clothD);
+  limb(ctx, 74, -128, 62, -8, 28, clothD);
+  /* shoe */
+  ctx.fillStyle = INK;
+  rrect(ctx, 46, -18, 52, 18, 7);
   ctx.fill();
 
-  /* far arm, behind the body: over it, the upper arm reads as a
-     strap across the chest rather than a limb */
-  limb(ctx, SHO.x - dir * 6, SHO.y + 16, dir * 66, -244, 21, clothD);
-  limb(ctx, dir * 66, -244, dir * 112, -236, 19, clothD);
-  limb(ctx, dir * 112, -236, dir * 134, -230, 15, skinSh);
+  /* far arm, behind the torso: over it, the upper arm would read as
+     a strap across the chest rather than a limb */
+  limb(ctx, SHO.x - 6, SHO.y + 16, 66, -244, 21, clothD);
+  limb(ctx, 66, -244, 120, -234, 19, clothD);
+  ctx.fillStyle = skinD;
+  circle(ctx, 130, -232, 11);
+  ctx.fill();
 
   /* torso */
   ctx.fillStyle = cloth;
   ctx.beginPath();
-  ctx.moveTo(HIP.x - dir * 52, HIP.y + 18);
-  ctx.quadraticCurveTo(SHO.x - dir * 54, lerp(HIP.y, SHO.y, 0.5), SHO.x - dir * 40, SHO.y + 4);
-  ctx.quadraticCurveTo(SHO.x, SHO.y - 26, SHO.x + dir * 38, SHO.y + 6);
-  ctx.quadraticCurveTo(HIP.x + dir * 58, lerp(HIP.y, SHO.y, 0.45), HIP.x + dir * 50, HIP.y + 18);
+  ctx.moveTo(HIP.x - 52, HIP.y + 18);
+  ctx.quadraticCurveTo(SHO.x - 60, lerp(HIP.y, SHO.y, 0.5), SHO.x - 52, SHO.y + 6);
+  ctx.quadraticCurveTo(SHO.x - 4, SHO.y - 30, SHO.x + 48, SHO.y + 8);
+  ctx.quadraticCurveTo(HIP.x + 58, lerp(HIP.y, SHO.y, 0.45), HIP.x + 50, HIP.y + 18);
   ctx.closePath();
   ctx.fill();
-
-  /* the jacket's shaded back, and the placket down the front */
+  /* shading down the back */
   ctx.save();
   ctx.clip();
-  ctx.fillStyle = clothD;
-  ctx.fillRect(SHO.x - dir * 70, SHO.y - 40, dir * 34, 260);
+  const tsh = ctx.createLinearGradient(-60, 0, 20, 0);
+  tsh.addColorStop(0, clothD);
+  tsh.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = tsh;
+  ctx.fillRect(-80, -400, 160, 300);
   ctx.restore();
-  ctx.strokeStyle = clothD;
-  ctx.lineWidth = 4;
+
+  /* the diagonal placket of a mandarin jacket */
+  ctx.strokeStyle = trim;
+  ctx.lineWidth = 4.5;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(SHO.x + dir * 24, SHO.y + 12);
-  ctx.quadraticCurveTo(HIP.x + dir * 42, -250, HIP.x + dir * 40, HIP.y + 14);
+  ctx.moveTo(SHO.x + 22, SHO.y + 16);
+  ctx.quadraticCurveTo(SHO.x + 36, SHO.y + 70, SHO.x + 30, SHO.y + 120);
   ctx.stroke();
-  /* frog fastenings */
-  ctx.fillStyle = COLLAR;
-  for (const fy of [-300, -258, -216]) {
-    circle(ctx, SHO.x + dir * 27 - (SHO.y - fy) * dir * 0.04, fy, 4.4);
-    ctx.fill();
-  }
 
   /* neck */
-  limb(ctx, SHO.x, SHO.y - 2, HEAD.x, HEAD.y + R * 0.74, 27, skinSh);
-
-  /* the head's shadow on the neck */
+  limb(ctx, SHO.x, SHO.y + 4, HEAD.x - 6, HEAD.y + R * 0.52, 36, skin);
+  limb(ctx, SHO.x - 11, SHO.y + 4, HEAD.x - 17, HEAD.y + R * 0.52, 15, skinD);
+  /* the jaw's shadow, which is what keeps the neck from floating */
   ctx.save();
-  ctx.globalAlpha = 0.15;
-  ctx.fillStyle = "#000000";
-  ellipse(ctx, HEAD.x - dir * 2, HEAD.y + R * 1.0, R * 0.25, R * 0.13);
-  ctx.fill();
+  ctx.globalAlpha = 0.5;
+  limb(ctx, HEAD.x - 20, HEAD.y + R * 0.56, HEAD.x + 16, HEAD.y + R * 0.6, 15, skinD);
   ctx.restore();
 
-  /* mandarin collar, sitting over the neck */
-  ctx.fillStyle = COLLAR;
+  /* mandarin collar */
+  ctx.fillStyle = trim;
   ctx.beginPath();
-  ctx.moveTo(SHO.x - dir * 42, SHO.y + 2);
-  ctx.quadraticCurveTo(SHO.x - dir * 12, SHO.y - 40, SHO.x + dir * 26, SHO.y - 6);
-  ctx.quadraticCurveTo(SHO.x + dir * 10, SHO.y + 16, SHO.x - dir * 42, SHO.y + 2);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = cloth;
-  ctx.beginPath();
-  ctx.moveTo(SHO.x - dir * 40, SHO.y + 6);
-  ctx.quadraticCurveTo(SHO.x - dir * 8, SHO.y + 22, SHO.x + dir * 24, SHO.y + 2);
-  ctx.quadraticCurveTo(SHO.x, SHO.y + 26, SHO.x - dir * 40, SHO.y + 18);
+  ctx.moveTo(SHO.x - 18, SHO.y + 16);
+  ctx.quadraticCurveTo(SHO.x - 2, SHO.y + 1, SHO.x + 21, SHO.y + 12);
+  ctx.quadraticCurveTo(SHO.x + 11, SHO.y + 26, SHO.x - 2, SHO.y + 27);
   ctx.closePath();
   ctx.fill();
 
-  /* head, drawn about its own centre so it can tilt */
+  /* head, about its own centre so it can tilt */
   ctx.save();
   ctx.translate(HEAD.x, HEAD.y);
-  ctx.rotate(headTilt * dir);
-  drawHead(ctx, {
-    R,
-    dir,
-    jaw: mouth,
-    skin,
-    skinSh,
-    hair: hairCol,
-    hairL: hairLCol,
-    style: hair,
-  });
+  ctx.rotate(headTilt);
+  drawHead(ctx, { R, mouth, blink, hair, skin, skinD, hairColour: HAIR });
   ctx.restore();
 
-  /* near arm: swings from the table up to the mouth. Sleeve to the
-     cuff, bare skin past it, so the hand reads as a hand. */
+  /* near arm: swings from the table up to the mouth */
   const u = easeInOut(clamp01(lift));
-  const elbow = {
-    x: lerp(dir * 62, dir * 96, u),
-    y: lerp(-258, -306, u) + breath * 0.5,
-  };
-  const hand = {
-    x: lerp(dir * 132, HEAD.x + dir * 34, u),
-    y: lerp(-226, HEAD.y + 24, u),
-  };
-  const cuff = { x: lerp(elbow.x, hand.x, 0.46), y: lerp(elbow.y, hand.y, 0.46) };
+  const elbow = { x: lerp(62, 72, u), y: lerp(-258, -300, u) + breath * 0.5 };
+  const hand = { x: lerp(132, HEAD.x - 21, u), y: lerp(-226, HEAD.y + 36, u) };
   limb(ctx, SHO.x, SHO.y + 10, elbow.x, elbow.y, 24, cloth);
-  limb(ctx, elbow.x, elbow.y, cuff.x, cuff.y, 21, cloth);
-  ctx.fillStyle = COLLAR;
-  circle(ctx, cuff.x, cuff.y, 11);
-  ctx.fill();
-  limb(ctx, cuff.x, cuff.y, hand.x, hand.y, 16, skin);
+  limb(ctx, elbow.x, elbow.y, hand.x - 10, hand.y + 4, 21, cloth);
+  /* cuff + hand */
+  ctx.strokeStyle = trim;
+  ctx.lineWidth = 21;
+  ctx.lineCap = "butt";
+  ctx.beginPath();
+  ctx.moveTo(hand.x - 26, hand.y + 10);
+  ctx.lineTo(hand.x - 18, hand.y + 7);
+  ctx.stroke();
   ctx.fillStyle = skin;
-  circle(ctx, hand.x, hand.y, 12.5);
-  ctx.fill();
-  /* thumb */
-  ctx.fillStyle = skinSh;
-  ellipse(ctx, hand.x + dir * 7, hand.y - 6, 5.5, 3.4, dir * -0.5);
+  ctx.beginPath();
+  ctx.ellipse(hand.x - 4, hand.y + 2, 14, 11, -0.3, 0, Math.PI * 2);
   ctx.fill();
 
   /* chopsticks, angled toward whatever the hand is doing */
-  const ang = lerp(-0.95, -0.15, u);
-  const len = 58;
+  const ang = lerp(-0.95, -0.35, u);
+  const len = 60;
+  ctx.strokeStyle = WOOD_L;
+  ctx.lineWidth = 5;
   ctx.lineCap = "round";
-  for (const off of [-5, 4.5]) {
-    ctx.strokeStyle = off < 0 ? BAMBOO : BAMBOO_D;
-    ctx.lineWidth = 4.6;
+  for (const off of [-5, 5]) {
     ctx.beginPath();
-    ctx.moveTo(hand.x - dir * 14 * Math.cos(ang), hand.y - 14 * Math.sin(ang) + off);
-    ctx.lineTo(hand.x + dir * len * Math.cos(ang), hand.y + len * Math.sin(ang) + off);
+    ctx.moveTo(hand.x - 8, hand.y + off);
+    ctx.lineTo(hand.x + len * Math.cos(ang), hand.y + len * Math.sin(ang) + off);
     ctx.stroke();
   }
   if (holding > 0.02) {
-    const hx = hand.x + dir * (len + 5) * Math.cos(ang);
-    const hy = hand.y + (len + 5) * Math.sin(ang);
-    ctx.fillStyle = DUMPLING;
-    ellipse(ctx, hx, hy, 13 * holding, 11.5 * holding);
-    ctx.fill();
-    ctx.fillStyle = DUMPLING_D;
+    const dx = hand.x + (len + 5) * Math.cos(ang);
+    const dy = hand.y + (len + 5) * Math.sin(ang);
+    const r = 13 * holding;
+    ctx.fillStyle = "#f6e6c8";
     ctx.beginPath();
-    ctx.arc(hx, hy, 13 * holding, 0.5, 2.3);
+    ctx.ellipse(dx, dy, r, r * 0.86, 0, 0, Math.PI * 2);
     ctx.fill();
-    /* the pleat along the top */
-    ctx.strokeStyle = DUMPLING_D;
-    ctx.lineWidth = 1.6 * holding;
-    ctx.beginPath();
-    ctx.moveTo(hx - 8 * holding, hy - 6 * holding);
-    ctx.quadraticCurveTo(hx, hy - 10 * holding, hx + 8 * holding, hy - 6 * holding);
-    ctx.stroke();
+    ctx.strokeStyle = "#dcc49b";
+    ctx.lineWidth = 1.8;
+    for (const a of [-0.6, 0, 0.6]) {
+      ctx.beginPath();
+      ctx.moveTo(dx + Math.sin(a) * r * 0.75, dy - r * 0.8);
+      ctx.lineTo(dx + Math.sin(a) * r * 0.3, dy + r * 0.5);
+      ctx.stroke();
+    }
   }
+
+  ctx.restore();
 }
 
 /* ── Table setting ───────────────────────────────────────────── */
 function drawTable(ctx, t) {
   const TOP = -222;
 
-  /* walnut top with a lit edge */
+  /* table */
   ctx.fillStyle = WOOD;
-  rrect(ctx, -196, TOP, 392, 21, 7);
+  rrect(ctx, -196, TOP, 392, 22, 7);
   ctx.fill();
   ctx.fillStyle = WOOD_L;
-  rrect(ctx, -196, TOP, 392, 6, 3);
-  ctx.fill();
+  ctx.fillRect(-196, TOP, 392, 5);
   ctx.fillStyle = WOOD_D;
-  ctx.fillRect(-190, TOP + 16, 380, 5);
-  limb(ctx, -150, TOP + 20, -142, -6, 14, WOOD_D);
-  limb(ctx, 150, TOP + 20, 142, -6, 14, WOOD_D);
+  ctx.fillRect(-196, TOP + 17, 392, 5);
+  limb(ctx, -150, TOP + 22, -142, -6, 14, WOOD_D);
+  limb(ctx, 150, TOP + 22, 142, -6, 14, WOOD_D);
 
-  /* a runner down the middle of the table */
-  ctx.fillStyle = "#8d2f28";
-  rrect(ctx, -96, TOP - 4, 204, 8, 3);
-  ctx.fill();
-  ctx.fillStyle = BRASS;
-  ctx.fillRect(-96, TOP - 2, 204, 1.5);
-
-  /* stacked bamboo steamers */
-  const steam = (y, h, w, x) => {
-    ctx.fillStyle = BAMBOO;
-    rrect(ctx, x, y, w, h, 5);
+  /* bamboo steamers, stacked */
+  for (const [i, y] of [[0, TOP - 30], [1, TOP - 56]]) {
+    ctx.fillStyle = i ? "#d2a763" : "#c59a56";
+    rrect(ctx, -34 + i * 4, y, 118 - i * 8, 30 - i * 2, 6);
     ctx.fill();
-    ctx.fillStyle = BAMBOO_D;
-    ctx.fillRect(x + 2, y + h - 5, w - 4, 4);
-    ctx.strokeStyle = BAMBOO_L;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#a87f3e";
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.moveTo(x + 3, y + 5);
-    ctx.lineTo(x + w - 3, y + 5);
+    ctx.moveTo(-28 + i * 4, y + 14);
+    ctx.lineTo(80 - i * 4, y + 14);
     ctx.stroke();
-  };
-  steam(TOP - 30, 30, 118, -34);
-  steam(TOP - 56, 28, 110, -30);
-  /* woven lid */
-  ctx.fillStyle = BAMBOO_L;
-  rrect(ctx, -32, TOP - 64, 114, 11, 5);
+  }
+  /* the lid, with its little knot */
+  ctx.fillStyle = "#dcb470";
+  rrect(ctx, -32, TOP - 64, 114, 12, 5);
   ctx.fill();
-  ctx.strokeStyle = BAMBOO_D;
-  ctx.lineWidth = 1.4;
-  for (let i = 0; i < 7; i++) {
+  ctx.fillStyle = "#a87f3e";
+  circle(ctx, 25, TOP - 66, 6);
+  ctx.fill();
+
+  /* a plate of dumplings in front */
+  ctx.fillStyle = CELADON;
+  ctx.beginPath();
+  ctx.ellipse(-16, TOP - 4, 46, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  for (const [dx, dr] of [[-34, 11], [-16, 12], [2, 11]]) {
+    ctx.fillStyle = "#f6e6c8";
     ctx.beginPath();
-    ctx.moveTo(-26 + i * 17, TOP - 63);
-    ctx.lineTo(-20 + i * 17, TOP - 54);
+    ctx.ellipse(dx, TOP - 11, dr, dr * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#dcc49b";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(dx, TOP - 20);
+    ctx.lineTo(dx, TOP - 6);
     ctx.stroke();
   }
 
-  /* celadon teapot */
-  ctx.fillStyle = CELADON;
-  ellipse(ctx, -118, TOP - 26, 29, 25);
+  /* red clay teapot */
+  ctx.fillStyle = RED_D;
+  circle(ctx, -118, TOP - 26, 28);
   ctx.fill();
-  ctx.fillStyle = CELADON_D;
+  ctx.fillStyle = RED;
   ctx.beginPath();
-  ctx.arc(-118, TOP - 26, 29, 0.35, 2.5);
+  ctx.arc(-118, TOP - 26, 28, Math.PI * 1.15, Math.PI * 1.95);
+  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = CELADON;
-  rrect(ctx, -128, TOP - 60, 20, 11, 4);
+  ctx.fillStyle = RED_D;
+  rrect(ctx, -127, TOP - 62, 19, 11, 4);
   ctx.fill();
-  ctx.fillStyle = BRASS;
-  circle(ctx, -118, TOP - 62, 4.5);
+  ctx.fillStyle = GOLD;
+  circle(ctx, -117.5, TOP - 64, 4.5);
   ctx.fill();
-  ctx.strokeStyle = CELADON;
+  ctx.strokeStyle = RED_D;
   ctx.lineWidth = 8;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(-144, TOP - 34);
+  ctx.moveTo(-143, TOP - 34);
   ctx.quadraticCurveTo(-170, TOP - 30, -166, TOP - 8);
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(-96, TOP - 38);
-  ctx.quadraticCurveTo(-72, TOP - 32, -92, TOP - 14);
+  ctx.quadraticCurveTo(-73, TOP - 32, -94, TOP - 14);
   ctx.stroke();
 
-  /* cups of tea */
-  for (const cx of [120, -64]) {
-    ctx.fillStyle = CELADON_D;
-    ellipse(ctx, cx, TOP - 1, 19, 5);
-    ctx.fill();
+  /* celadon cups + a dish of chilli oil */
+  for (const cx of [118, -64]) {
     ctx.fillStyle = CELADON;
-    rrect(ctx, cx - 15, TOP - 18, 30, 18, 5);
+    rrect(ctx, cx - 15, TOP - 17, 30, 17, 5);
     ctx.fill();
-    ctx.fillStyle = TEA;
-    ellipse(ctx, cx, TOP - 16, 12.5, 3.6);
-    ctx.fill();
+    ctx.fillStyle = "#c3d0bd";
+    ctx.fillRect(cx - 15, TOP - 4, 30, 4);
   }
-
-  /* a small plate of dumplings in front of each guest */
-  for (const px of [-172, 168]) {
-    ctx.fillStyle = CELADON;
-    ellipse(ctx, px, TOP - 4, 30, 8);
-    ctx.fill();
-    ctx.fillStyle = CELADON_D;
-    ctx.beginPath();
-    ctx.ellipse(px, TOP - 4, 30, 8, 0, 0, Math.PI);
-    ctx.fill();
-    for (const [ox, oy, r] of [
-      [-11, -9, 10],
-      [8, -10, 10.5],
-      [-1, -16, 9],
-    ]) {
-      ctx.fillStyle = DUMPLING;
-      ellipse(ctx, px + ox, TOP - 4 + oy, r, r * 0.86);
-      ctx.fill();
-      ctx.fillStyle = DUMPLING_D;
-      ctx.beginPath();
-      ctx.arc(px + ox, TOP - 4 + oy, r, 0.5, 2.4);
-      ctx.fill();
-    }
-  }
+  ctx.fillStyle = CELADON;
+  ctx.beginPath();
+  ctx.ellipse(68, TOP - 4, 17, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#c0392b";
+  ctx.beginPath();
+  ctx.ellipse(68, TOP - 5, 12, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   /* steam, curling off the steamers */
-  ctx.strokeStyle = "rgba(255,255,255,0.62)";
+  ctx.strokeStyle = "rgba(255,246,228,0.85)";
   ctx.lineWidth = 3.6;
   ctx.lineCap = "round";
   for (let i = 0; i < 3; i++) {
     const ph = t * 0.85 + i * 0.47;
     const rise = ph % 1;
     const x0 = 2 + i * 32;
-    const y0 = TOP - 68;
-    ctx.globalAlpha = (1 - rise) * 0.6 * Math.min(1, rise * 5);
+    const y0 = TOP - 66;
+    ctx.globalAlpha = (1 - rise) * 0.5 * Math.min(1, rise * 5);
     ctx.beginPath();
     ctx.moveTo(x0, y0);
     for (let s = 0; s <= 1.001; s += 0.25) {
@@ -722,81 +671,65 @@ function lantern(ctx, x, y, r, t, i) {
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(0, 0);
-  ctx.lineTo(0, cy - r * 0.92);
+  ctx.lineTo(0, cy - r);
   ctx.stroke();
 
-  /* the light it throws */
-  const halo = ctx.createRadialGradient(0, cy, r * 0.5, 0, cy, r * 5.2);
-  halo.addColorStop(0, "rgba(255,206,130,0.30)");
-  halo.addColorStop(0.45, "rgba(255,196,120,0.09)");
-  halo.addColorStop(1, "rgba(255,196,120,0)");
+  /* halo */
+  const halo = ctx.createRadialGradient(0, cy, r * 0.5, 0, cy, r * 3.4);
+  halo.addColorStop(0, "rgba(255,210,130,0.40)");
+  halo.addColorStop(1, "rgba(255,210,130,0)");
   ctx.fillStyle = halo;
-  circle(ctx, 0, cy, r * 5.2);
+  circle(ctx, 0, cy, r * 3.4);
   ctx.fill();
 
-  /* red silk body */
-  ctx.fillStyle = LANT;
-  ellipse(ctx, 0, cy, r, r * 0.88);
+  /* silk body */
+  const body = ctx.createLinearGradient(0, cy - r, 0, cy + r);
+  body.addColorStop(0, LAMP);
+  body.addColorStop(0.5, GLOW);
+  body.addColorStop(1, GLOW_D);
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.ellipse(0, cy, r, r * 0.86, 0, 0, Math.PI * 2);
   ctx.fill();
-  /* lit from within on the lower half */
-  const inner = ctx.createRadialGradient(0, cy + r * 0.2, r * 0.1, 0, cy, r);
-  inner.addColorStop(0, "rgba(255,214,150,0.85)");
-  inner.addColorStop(0.55, "rgba(216,90,70,0.35)");
-  inner.addColorStop(1, "rgba(150,39,29,0)");
-  ctx.fillStyle = inner;
-  ellipse(ctx, 0, cy, r, r * 0.88);
-  ctx.fill();
+
   /* ribs */
-  ctx.strokeStyle = "rgba(150,39,29,0.45)";
-  ctx.lineWidth = r * 0.045;
-  for (const f of [0.34, 0.68]) {
+  ctx.strokeStyle = "rgba(180,110,30,0.35)";
+  ctx.lineWidth = 2;
+  for (const f of [-0.62, -0.3, 0.3, 0.62]) {
     ctx.beginPath();
-    ctx.ellipse(0, cy, r * f, r * 0.88, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, cy, Math.abs(r * f), r * 0.86, 0, 0, Math.PI * 2);
     ctx.stroke();
   }
-  ctx.strokeStyle = "rgba(255,230,180,0.35)";
-  ctx.beginPath();
-  ctx.ellipse(-r * 0.42, cy, r * 0.16, r * 0.7, 0, 0, Math.PI * 2);
-  ctx.stroke();
 
-  /* brass caps */
-  ctx.fillStyle = BRASS;
-  rrect(ctx, -r * 0.3, cy - r * 0.95, r * 0.6, r * 0.18, r * 0.07);
+  /* caps + tassel */
+  ctx.fillStyle = RED_D;
+  rrect(ctx, -r * 0.3, cy - r * 0.86 - 9, r * 0.6, 11, 3);
   ctx.fill();
-  rrect(ctx, -r * 0.26, cy + r * 0.8, r * 0.52, r * 0.16, r * 0.06);
+  rrect(ctx, -r * 0.26, cy + r * 0.86 - 3, r * 0.52, 10, 3);
   ctx.fill();
-
-  /* tassel */
-  ctx.strokeStyle = LANT_D;
-  ctx.lineWidth = r * 0.09;
+  ctx.strokeStyle = RED;
+  ctx.lineWidth = 4.5;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(0, cy + r * 0.95);
-  ctx.lineTo(0, cy + r * 1.32);
+  ctx.moveTo(0, cy + r * 0.86 + 6);
+  ctx.lineTo(Math.sin(t * 1.3 + i) * 5, cy + r * 1.5);
   ctx.stroke();
-  ctx.fillStyle = LANT_L;
-  ctx.beginPath();
-  ctx.moveTo(-r * 0.13, cy + r * 1.28);
-  ctx.lineTo(r * 0.13, cy + r * 1.28);
-  ctx.lineTo(r * 0.07, cy + r * 1.62);
-  ctx.lineTo(-r * 0.07, cy + r * 1.62);
-  ctx.closePath();
-  ctx.fill();
   ctx.restore();
 }
 
 function latticePanel(ctx, x, y, w, h) {
-  /* backlit paper in a walnut frame */
+  /* warm paper behind a jade lattice */
   ctx.save();
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
-  const g = ctx.createLinearGradient(x, y, x, y + h);
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
   g.addColorStop(0, PAPER);
-  g.addColorStop(1, "#ecdfc4");
+  g.addColorStop(1, "#e8d3a6");
   ctx.fillStyle = g;
   ctx.fillRect(x, y, w, h);
 
-  ctx.strokeStyle = WOOD;
+  ctx.strokeStyle = GREEN_D;
   ctx.lineWidth = 8;
   const step = 112;
   for (let gx = x; gx <= x + w + step; gx += step) {
@@ -811,31 +744,27 @@ function latticePanel(ctx, x, y, w, h) {
     ctx.lineTo(x + w, gy);
     ctx.stroke();
   }
-  /* corner brackets in each pane, rather than a cross — a cross in
-     the middle of every square reads as a grid of plus signs */
-  ctx.strokeStyle = WOOD_L;
-  ctx.lineWidth = 4;
-  const b = 20;
-  for (let gx = x; gx <= x + w; gx += step) {
-    for (let gy = y; gy <= y + h; gy += step) {
-      for (const [sx, sy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
-        const ox = gx + sx * step * 0.5;
-        const oy = gy + sy * step * 0.5;
-        if (ox < x || ox > x + w || oy < y || oy > y + h) continue;
-        ctx.beginPath();
-        ctx.moveTo(gx + sx * 7, oy - sy * b);
-        ctx.lineTo(gx + sx * 7, oy);
-        ctx.lineTo(ox - sx * b, oy);
-        ctx.stroke();
-      }
+  ctx.strokeStyle = GREEN;
+  ctx.lineWidth = 4.5;
+  for (let gx = x + step / 2; gx <= x + w; gx += step) {
+    for (let gy = y + step / 2; gy <= y + h; gy += step) {
+      ctx.beginPath();
+      ctx.moveTo(gx, gy - 26);
+      ctx.lineTo(gx + 26, gy);
+      ctx.lineTo(gx, gy + 26);
+      ctx.lineTo(gx - 26, gy);
+      ctx.closePath();
+      ctx.stroke();
     }
   }
   ctx.restore();
+
+  /* frame */
   ctx.strokeStyle = WOOD_D;
   ctx.lineWidth = 12;
   ctx.strokeRect(x, y, w, h);
   ctx.strokeStyle = WOOD_L;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.strokeRect(x + 7, y + 7, w - 14, h - 14);
 }
 
@@ -848,141 +777,125 @@ function sideTable(ctx, x, flip, t, i) {
   ctx.fillStyle = WOOD;
   rrect(ctx, -150, TOP, 300, 17, 6);
   ctx.fill();
-  ctx.fillStyle = WOOD_L;
-  rrect(ctx, -150, TOP, 300, 5, 2.5);
-  ctx.fill();
-  limb(ctx, -112, TOP + 16, -106, -6, 11, WOOD_D);
-  limb(ctx, 112, TOP + 16, 106, -6, 11, WOOD_D);
-  ctx.fillStyle = BAMBOO;
+  limb(ctx, -112, TOP + 17, -106, -6, 11, WOOD_D);
+  limb(ctx, 112, TOP + 17, 106, -6, 11, WOOD_D);
+  ctx.fillStyle = "#c59a56";
   rrect(ctx, -40, TOP - 26, 80, 26, 5);
-  ctx.fill();
-  ctx.fillStyle = BAMBOO_L;
-  rrect(ctx, -42, TOP - 32, 84, 8, 4);
   ctx.fill();
 
   const bob = Math.sin(t * 1.1 + i) * 3;
-  const pair = [
-    { skin: SKIN_B, hair: HAIR_B, cloth: "#6a4a63", clothD: "#523a4c" },
-    { skin: SKIN_A, hair: HAIR_A, cloth: "#3d6076", clothD: "#2f4a5c" },
+  const kit = [
+    { cloth: "#3f5a6b", clothD: "#2d4150" },
+    { cloth: "#7a4a63", clothD: "#5c3449" },
   ];
-  pair.forEach((p, n) => {
-    const d = n === 0 ? -1 : 1;
+  for (const [n, d] of [[0, -1], [1, 1]]) {
+    const c = kit[(n + i) % 2];
     ctx.save();
     ctx.translate(d * 250, 0);
+    ctx.scale(d, 1);
     /* chair */
     ctx.strokeStyle = WOOD_D;
-    ctx.lineWidth = 10;
+    ctx.lineWidth = 9;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(-d * 86, -12);
-    ctx.lineTo(-d * 92, -268);
+    ctx.moveTo(-86, -12);
+    ctx.lineTo(-92, -268);
     ctx.stroke();
     /* legs */
-    limb(ctx, -d * 40, -140, d * 60, -120, 27, p.clothD);
-    limb(ctx, d * 60, -120, d * 52, -8, 24, p.clothD);
-    /* body */
-    ctx.fillStyle = p.cloth;
+    limb(ctx, -40, -140, 60, -120, 26, c.clothD);
+    limb(ctx, 60, -120, 52, -8, 23, c.clothD);
+    /* torso */
+    ctx.fillStyle = c.cloth;
     ctx.beginPath();
-    ctx.moveTo(-d * 70, -126);
-    ctx.quadraticCurveTo(-d * 56, -300, -d * 18, -318 + bob);
-    ctx.quadraticCurveTo(d * 24, -300, d * 30, -126);
+    ctx.moveTo(-70, -126);
+    ctx.quadraticCurveTo(-56, -300, -18, -318 + bob);
+    ctx.quadraticCurveTo(24, -300, 30, -126);
     ctx.closePath();
     ctx.fill();
-    limb(ctx, -d * 8, -300, d * 84, -228, 19, p.cloth);
-    ctx.fillStyle = p.skin;
-    circle(ctx, d * 92, -226, 13);
-    ctx.fill();
+    /* arm to the table */
+    limb(ctx, -8, -300, 84, -228, 18, c.cloth);
     /* head */
-    ctx.fillStyle = p.skin;
-    circle(ctx, -d * 24, -392 + bob, 44);
+    ctx.fillStyle = SKIN;
+    circle(ctx, 24, -392 + bob, 44);
     ctx.fill();
-    ctx.fillStyle = p.hair;
+    ctx.fillStyle = HAIR;
     ctx.beginPath();
-    ctx.arc(-d * 24, -392 + bob, 44, Math.PI * 0.92, Math.PI * 2.16);
+    ctx.ellipse(16, -404 + bob, 45, 40, 0, Math.PI * 0.95, Math.PI * 2.1);
     ctx.fill();
     ctx.restore();
-  });
+  }
   ctx.restore();
 }
 
 function drawInterior(ctx, t) {
   /* wall */
-  const wall = ctx.createLinearGradient(0, -1240, 0, 0);
-  wall.addColorStop(0, WALL_SH);
-  wall.addColorStop(0.45, WALL);
-  wall.addColorStop(1, WALL_SH);
-  ctx.fillStyle = wall;
+  ctx.fillStyle = WALL;
   ctx.fillRect(-1600, -1240, 3200, 1240);
-
   /* warmth pooling under the central lantern */
   const pool = ctx.createRadialGradient(0, -700, 60, 0, -620, 1150);
-  pool.addColorStop(0, "rgba(255,206,140,0.34)");
-  pool.addColorStop(1, "rgba(255,206,140,0)");
+  pool.addColorStop(0, "rgba(255,214,140,0.45)");
+  pool.addColorStop(1, "rgba(255,214,140,0)");
   ctx.fillStyle = pool;
   ctx.fillRect(-1600, -1240, 3200, 1240);
-
-  /* panelled wainscot under a walnut cap rail. A solid dark dado
-     reads as a brown band across the bottom third of the opening
-     shot and swallows the chairs; keeping it cream keeps the room
-     light and the furniture legible. */
-  ctx.fillStyle = "#e8d9bd";
-  ctx.fillRect(-1600, -140, 3200, 140);
-  ctx.strokeStyle = "#dccaa9";
-  ctx.lineWidth = 4;
-  for (let px = -1560; px <= 1600; px += 240) {
-    rrect(ctx, px, -116, 190, 88, 5);
-    ctx.stroke();
-  }
-  ctx.fillStyle = WOOD;
-  ctx.fillRect(-1600, -152, 3200, 14);
-  ctx.fillStyle = WOOD_L;
-  ctx.fillRect(-1600, -152, 3200, 4);
+  /* a skirting, well below the table so it cannot be mistaken for it */
+  ctx.fillStyle = WALL_D;
+  ctx.fillRect(-1600, -96, 3200, 96);
   ctx.fillStyle = WOOD_D;
-  ctx.fillRect(-1600, -24, 3200, 24);
+  ctx.fillRect(-1600, -104, 3200, 12);
 
-  /* floor: warm boards, with the lanterns reflected in them */
+  /* timber floor */
   const fl = ctx.createLinearGradient(0, 0, 0, 260);
   fl.addColorStop(0, FLOOR);
   fl.addColorStop(1, FLOOR_D);
   ctx.fillStyle = fl;
   ctx.fillRect(-1600, 0, 3200, 260);
-  ctx.strokeStyle = "rgba(0,0,0,0.16)";
+  ctx.strokeStyle = "rgba(0,0,0,0.18)";
   ctx.lineWidth = 3;
-  for (let bx = -1600; bx <= 1600; bx += 190) {
+  for (let y = 46; y < 260; y += 58) {
     ctx.beginPath();
-    ctx.moveTo(bx, 0);
-    ctx.lineTo(bx + 34, 260);
+    ctx.moveTo(-1600, y);
+    ctx.lineTo(1600, y);
     ctx.stroke();
   }
-  for (const [rx, rw] of [[-760, 150], [0, 180], [760, 150]]) {
-    const rg = ctx.createLinearGradient(0, 0, 0, 230);
-    rg.addColorStop(0, "rgba(255,200,130,0.26)");
-    rg.addColorStop(1, "rgba(255,200,130,0)");
-    ctx.fillStyle = rg;
-    ctx.beginPath();
-    ctx.moveTo(rx - rw * 0.4, 0);
-    ctx.lineTo(rx + rw * 0.4, 0);
-    ctx.lineTo(rx + rw, 230);
-    ctx.lineTo(rx - rw, 230);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.strokeStyle = WOOD_D;
-  ctx.lineWidth = 7;
-  ctx.beginPath();
-  ctx.moveTo(-1600, 0);
-  ctx.lineTo(1600, 0);
-  ctx.stroke();
+  /* lamplight reflected in the boards */
+  const refl = ctx.createLinearGradient(0, 0, 0, 230);
+  refl.addColorStop(0, "rgba(255,206,128,0.30)");
+  refl.addColorStop(1, "rgba(255,206,128,0)");
+  ctx.fillStyle = refl;
+  ctx.fillRect(-900, 0, 1800, 230);
+  ctx.fillStyle = FLOOR_L;
+  ctx.fillRect(-1600, 0, 3200, 5);
 
   /* ceiling beam */
   ctx.fillStyle = WOOD_D;
-  ctx.fillRect(-1600, -1180, 3200, 56);
+  ctx.fillRect(-1600, -1180, 3200, 54);
   ctx.fillStyle = WOOD;
-  ctx.fillRect(-1600, -1124, 3200, 9);
+  ctx.fillRect(-1600, -1180, 3200, 8);
 
   /* lattice screens either side of the centre */
-  latticePanel(ctx, -1210, -930, 520, 780);
-  latticePanel(ctx, 690, -930, 520, 780);
+  latticePanel(ctx, -1210, -930, 520, 720);
+  latticePanel(ctx, 690, -930, 520, 720);
+
+  /* a scroll of calligraphy on the centre wall */
+  ctx.fillStyle = "#f3e7cd";
+  rrect(ctx, -74, -846, 148, 366, 3);
+  ctx.fill();
+  ctx.strokeStyle = WOOD_D;
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(-84, -850);
+  ctx.lineTo(84, -850);
+  ctx.moveTo(-84, -476);
+  ctx.lineTo(84, -476);
+  ctx.stroke();
+  ctx.fillStyle = "#231a12";
+  ctx.font = "132px KhangCn";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("康", 0, -700);
+  ctx.fillStyle = RED;
+  rrect(ctx, 18, -572, 34, 38, 4);
+  ctx.fill();
 
   sideTable(ctx, -1180, 1, t, 0);
   sideTable(ctx, 1180, -1, t, 1);
@@ -997,27 +910,27 @@ function drawInterior(ctx, t) {
   /* ── choreography ───────────────────────────────────────────
      Left guest talks, right guest listens, lifts a dumpling,
      eats it, chews; then the left guest picks the thread back up. */
-  const speakL = (t > 0.3 && t < 1.5 ? 1 : 0) + (t > 2.45 && t < 3.7 ? 1 : 0);
+  const speakL = (t > 0.3 && t < 1.55 ? 1 : 0) + (t > 2.45 && t < 3.5 ? 1 : 0);
   const jawL =
     speakL > 0
       ? clamp01(0.5 + 0.5 * Math.sin(t * 15.5) * Math.sin(t * 6.1 + 1.2)) *
         (0.55 + 0.45 * Math.sin(t * 3.3))
       : 0;
 
-  const liftStart = 1.25;
-  const atMouth = 1.85;
-  const biteEnd = 2.12;
-  const backDown = 2.72;
+  const liftStart = 1.35;
+  const atMouth = 1.95;
+  const biteEnd = 2.24;
+  const backDown = 2.86;
   let liftR = 0;
   if (t >= liftStart && t < atMouth) liftR = seg(t, liftStart, atMouth, easeInOut);
   else if (t >= atMouth && t < biteEnd) liftR = 1;
   else if (t >= biteEnd && t < backDown) liftR = 1 - seg(t, biteEnd, backDown, easeInOut);
 
-  const chewing = t > biteEnd && t < biteEnd + 1.45;
+  const chewing = t > biteEnd && t < biteEnd + 1.5;
   const jawR = chewing
     ? 0.34 + 0.3 * Math.sin((t - biteEnd) * 13.5)
     : t > atMouth - 0.12 && t < biteEnd
-      ? 0.85
+      ? 0.9
       : 0;
 
   const holdingR =
@@ -1027,7 +940,13 @@ function drawInterior(ctx, t) {
         : 0
       : clamp01(1 - (t - (atMouth - 0.02)) / 0.16);
 
-  const nodR = Math.sin(t * 2.4) * 0.03 + (t > 0.6 && t < 1.3 ? Math.sin(t * 7.5) * 0.045 : 0);
+  /* a blink every few seconds keeps them alive */
+  const blink = (ph) => {
+    const c = (t + ph) % 3.4;
+    return c < 0.11 ? 1 : 0;
+  };
+
+  const nodR = Math.sin(t * 2.4) * 0.03 + (t > 0.7 && t < 1.5 ? Math.sin(t * 7.5) * 0.045 : 0);
   const breathe = (ph) => Math.sin(t * 1.7 + ph) * 3.2;
 
   ctx.save();
@@ -1037,15 +956,13 @@ function drawInterior(ctx, t) {
     hair: "bun",
     mouth: jawL,
     lift: 0,
+    blink: blink(0.6),
     headTilt: Math.sin(t * 1.9) * 0.035 + (speakL ? Math.sin(t * 5.2) * 0.03 : 0),
     lean: 5 + Math.sin(t * 1.3) * 2,
     breath: breathe(0),
-    skin: SKIN_A,
-    skinSh: SKIN_A_SH,
-    hairCol: HAIR_A,
-    hairLCol: HAIR_A_L,
-    cloth: CLOTH_A,
-    clothD: CLOTH_A_D,
+    cloth: RED,
+    clothD: RED_D,
+    trim: GOLD,
   });
   ctx.restore();
 
@@ -1056,25 +973,24 @@ function drawInterior(ctx, t) {
     hair: "short",
     mouth: jawR,
     lift: liftR,
+    blink: blink(2.1),
     headTilt: nodR - liftR * 0.05,
     lean: 4 + Math.sin(t * 1.5 + 2) * 2,
     breath: breathe(2.1),
     holding: holdingR,
-    skin: SKIN_B,
-    skinSh: SKIN_B_SH,
-    hairCol: HAIR_B,
-    hairLCol: HAIR_B_L,
-    cloth: CLOTH_B,
-    clothD: CLOTH_B_D,
+    cloth: NAVY,
+    clothD: NAVY_D,
+    trim: "#cfd8c7",
   });
   ctx.restore();
 }
 
 /* ── The shopfront ───────────────────────────────────────────── */
 function drawFacade(ctx, t) {
-  /* sky */
+  /* sky, with the city's glow low on the horizon */
   const sky = ctx.createLinearGradient(0, -200, 0, GROUND);
   sky.addColorStop(0, NIGHT_T);
+  sky.addColorStop(0.72, "#121b26");
   sky.addColorStop(1, NIGHT_B);
   ctx.fillStyle = sky;
   ctx.fillRect(-400, -400, W + 800, GROUND + 400);
@@ -1082,50 +998,63 @@ function drawFacade(ctx, t) {
   /* street */
   ctx.fillStyle = STREET;
   ctx.fillRect(-400, GROUND, W + 800, H - GROUND + 400);
+  ctx.fillStyle = "#19222c";
+  ctx.fillRect(-400, GROUND, W + 800, 10);
 
   /* building body */
   ctx.fillStyle = BUILD;
-  ctx.fillRect(330, 250, 1260, GROUND - 250);
+  ctx.fillRect(330, 242, 1260, GROUND - 242);
+  /* a brick-ish texture, barely there */
+  ctx.strokeStyle = "rgba(255,255,255,0.025)";
+  ctx.lineWidth = 2;
+  for (let y = 300; y < 430; y += 26) {
+    ctx.beginPath();
+    ctx.moveTo(334, y);
+    ctx.lineTo(1586, y);
+    ctx.stroke();
+  }
 
-  /* cornice, with a brass line under it */
+  /* cornice */
   ctx.fillStyle = BUILD_L;
-  rrect(ctx, 296, 236, 1328, 54, 8);
+  rrect(ctx, 296, 228, 1328, 50, 8);
   ctx.fill();
-  ctx.fillStyle = "rgba(247,241,228,0.14)";
-  ctx.fillRect(296, 236, 1328, 3);
-  ctx.fillStyle = "rgba(201,162,39,0.5)";
-  ctx.fillRect(312, 288, 1296, 2.5);
+  ctx.fillStyle = GOLD;
+  ctx.globalAlpha = 0.5;
+  ctx.fillRect(296, 272, 1328, 3);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "rgba(255,255,255,0.1)";
+  ctx.fillRect(296, 228, 1328, 3);
 
   /* piers */
   ctx.fillStyle = BUILD_L;
-  ctx.fillRect(330, 290, 104, GROUND - 290);
-  ctx.fillRect(1486, 290, 104, GROUND - 290);
-  ctx.fillStyle = "rgba(247,241,228,0.06)";
-  ctx.fillRect(330, 290, 4, GROUND - 290);
-  ctx.fillRect(1586, 290, 4, GROUND - 290);
-  /* warm bounce off the piers, from the window light */
-  const bounce = ctx.createLinearGradient(434, 0, 500, 0);
-  bounce.addColorStop(0, "rgba(255,200,130,0.14)");
-  bounce.addColorStop(1, "rgba(255,200,130,0)");
-  ctx.fillStyle = bounce;
-  ctx.fillRect(390, 430, 110, 450);
-  const bounce2 = ctx.createLinearGradient(1486, 0, 1420, 0);
-  bounce2.addColorStop(0, "rgba(255,200,130,0.14)");
-  bounce2.addColorStop(1, "rgba(255,200,130,0)");
-  ctx.fillStyle = bounce2;
-  ctx.fillRect(1420, 430, 110, 450);
+  ctx.fillRect(330, 278, 104, GROUND - 278);
+  ctx.fillRect(1486, 278, 104, GROUND - 278);
+  ctx.fillStyle = BUILD_LL;
+  ctx.fillRect(330, 278, 5, GROUND - 278);
+  ctx.fillRect(1585, 278, 5, GROUND - 278);
+  /* brass pier lamps */
+  for (const px of [382, 1538]) {
+    ctx.fillStyle = GOLD;
+    rrect(ctx, px - 11, 470, 22, 34, 5);
+    ctx.fill();
+    const l = ctx.createRadialGradient(px, 500, 4, px, 500, 90);
+    l.addColorStop(0, "rgba(255,214,140,0.42)");
+    l.addColorStop(1, "rgba(255,214,140,0)");
+    ctx.fillStyle = l;
+    circle(ctx, px, 500, 90);
+    ctx.fill();
+  }
 
-  /* signboard, in a brass frame */
-  ctx.fillStyle = "#0e1413";
-  rrect(ctx, 648, 272, 624, 160, 9);
+  /* signboard */
+  const bg = ctx.createLinearGradient(BOARD.x, BOARD.y, BOARD.x, BOARD.y + BOARD.h);
+  bg.addColorStop(0, "#0c2416");
+  bg.addColorStop(1, "#071a0f");
+  ctx.fillStyle = bg;
+  rrect(ctx, BOARD.x, BOARD.y, BOARD.w, BOARD.h, 8);
   ctx.fill();
-  ctx.strokeStyle = "rgba(201,162,39,0.55)";
-  ctx.lineWidth = 3;
-  rrect(ctx, 648, 272, 624, 160, 9);
-  ctx.stroke();
-  ctx.strokeStyle = "rgba(247,241,228,0.1)";
-  ctx.lineWidth = 1.5;
-  rrect(ctx, 656, 280, 608, 144, 6);
+  ctx.strokeStyle = "rgba(227,182,104,0.45)";
+  ctx.lineWidth = 2.5;
+  rrect(ctx, BOARD.x + 5, BOARD.y + 5, BOARD.w - 10, BOARD.h - 10, 6);
   ctx.stroke();
 }
 
@@ -1137,244 +1066,202 @@ function drawGlazingFrame(ctx, alpha) {
   const { x, y, w, h } = GLASS;
 
   /* transom above the glass */
-  ctx.fillStyle = BUILD_LL;
+  ctx.fillStyle = BUILD_L;
   ctx.fillRect(x - 10, y - 22, w + 20, 24);
 
   /* mullions: five bays, the middle one is the door */
   const bays = 5;
   const bw = w / bays;
-  ctx.fillStyle = BUILD_LL;
   for (let i = 0; i <= bays; i++) {
+    ctx.fillStyle = BUILD_L;
     ctx.fillRect(x + i * bw - 7, y, 14, h);
+    ctx.fillStyle = BUILD_LL;
+    ctx.fillRect(x + i * bw - 7, y, 3, h);
   }
   /* door stiles + brass handles */
   const dx = x + 2 * bw;
-  ctx.fillStyle = BUILD_LL;
-  ctx.fillRect(dx + bw / 2 - 11, y + 24, 22, h - 24);
-  ctx.fillStyle = "rgba(201,162,39,0.62)";
-  rrect(ctx, dx + bw / 2 - 15, y + 212, 5, 54, 2.5);
+  ctx.fillStyle = BUILD_L;
+  ctx.fillRect(dx + bw / 2 - 6, y + 30, 12, h - 30);
+  ctx.fillStyle = GOLD;
+  rrect(ctx, dx + bw / 2 - 22, y + 196, 7, 76, 3.5);
   ctx.fill();
-  rrect(ctx, dx + bw / 2 + 10, y + 212, 5, 54, 2.5);
+  rrect(ctx, dx + bw / 2 + 15, y + 196, 7, 76, 3.5);
   ctx.fill();
-  /* threshold */
-  ctx.fillStyle = BUILD_LL;
+  /* threshold + plinth */
+  ctx.fillStyle = BUILD_L;
   ctx.fillRect(x - 10, GROUND - 10, w + 20, 14);
-
-  /* base plinth */
-  ctx.fillStyle = "#222e2c";
+  ctx.fillStyle = "#1d3a26";
   ctx.fillRect(330, GROUND - 10, 1260, 14);
 
   /* step + light spilling onto the pavement */
-  ctx.fillStyle = "#19211f";
+  ctx.fillStyle = "#16261b";
   rrect(ctx, 790, GROUND + 4, 340, 20, 5);
   ctx.fill();
-  const spill = ctx.createLinearGradient(0, GROUND, 0, GROUND + 170);
-  spill.addColorStop(0, "rgba(255,206,140,0.30)");
-  spill.addColorStop(1, "rgba(255,206,140,0)");
+  const spill = ctx.createLinearGradient(0, GROUND, 0, GROUND + 160);
+  spill.addColorStop(0, "rgba(255,206,128,0.34)");
+  spill.addColorStop(1, "rgba(255,206,128,0)");
   ctx.fillStyle = spill;
   ctx.beginPath();
   ctx.moveTo(x + 40, GROUND);
   ctx.lineTo(x + w - 40, GROUND);
-  ctx.lineTo(x + w + 120, GROUND + 170);
-  ctx.lineTo(x - 120, GROUND + 170);
+  ctx.lineTo(x + w + 120, GROUND + 160);
+  ctx.lineTo(x - 120, GROUND + 160);
   ctx.closePath();
   ctx.fill();
 
-  /* planters of green either side of the door */
+  /* planters with real planting in them */
   for (const px of [472, 1448]) {
-    ctx.fillStyle = "#2f3a37";
-    rrect(ctx, px - 32, GROUND - 92, 64, 92, 8);
+    ctx.fillStyle = "#2e4132";
+    rrect(ctx, px - 34, GROUND - 92, 68, 92, 8);
     ctx.fill();
-    ctx.fillStyle = "#3b4744";
-    ctx.fillRect(px - 32, GROUND - 92, 64, 7);
-    ctx.fillStyle = "#2c6b43";
-    circle(ctx, px, GROUND - 128, 42);
+    ctx.fillStyle = GOLD;
+    ctx.globalAlpha = 0.35 * alpha;
+    ctx.fillRect(px - 34, GROUND - 78, 68, 2.5);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = GREEN_DD;
+    circle(ctx, px, GROUND - 128, 44);
     ctx.fill();
-    circle(ctx, px - 27, GROUND - 105, 26);
+    circle(ctx, px - 28, GROUND - 104, 27);
     ctx.fill();
-    circle(ctx, px + 27, GROUND - 107, 24);
+    circle(ctx, px + 28, GROUND - 106, 25);
     ctx.fill();
-    ctx.fillStyle = "#38854f";
-    circle(ctx, px - 10, GROUND - 141, 20);
+    ctx.fillStyle = GREEN_D;
+    circle(ctx, px - 8, GROUND - 142, 22);
     ctx.fill();
-    circle(ctx, px + 17, GROUND - 126, 15);
+    circle(ctx, px + 22, GROUND - 124, 17);
     ctx.fill();
   }
   ctx.restore();
 }
 
-/* ── The logo ────────────────────────────────────────────────── *
- * The same mark the site wears in its navbar: a jade disc with 康
- * on it, the name in Playfair beside or beneath it, a jade hairline
- * and the descriptor in Space Grotesk.                              */
-function logoBadge(ctx, cx, cy, r, alpha, ringW) {
-  ctx.save();
-  ctx.globalAlpha *= alpha;
-  const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-  g.addColorStop(0, JADE_L);
-  g.addColorStop(0.55, JADE);
-  g.addColorStop(1, JADE_D);
-  ctx.fillStyle = g;
-  circle(ctx, cx, cy, r);
-  ctx.fill();
-  ctx.strokeStyle = CREAM;
-  ctx.lineWidth = ringW;
-  circle(ctx, cx, cy, r + ringW * 0.5);
-  ctx.stroke();
-  /* a soft highlight across the top of the disc */
-  ctx.fillStyle = "rgba(255,255,255,0.12)";
-  ctx.beginPath();
-  ctx.ellipse(cx, cy - r * 0.42, r * 0.72, r * 0.34, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = CREAM;
-  ctx.font = `${Math.round(r * 1.12)}px KhangCn`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("康", cx, cy + r * 0.07);
-  ctx.restore();
-}
-
-/** Horizontal lockup — the one that goes on the shopfront board. */
-function logoLockupH(ctx, cx, cy, s, o) {
-  const { badge = 0, name = 0, rule = 0, sub = 0 } = o;
-  if (badge <= 0 && name <= 0) return;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.scale(s, s);
-
-  const R = 40;
-  const GAP = 26;
-  ctx.font = "54px KhangDisplay";
-  const nameW = ctx.measureText("Khang").width;
-  const total = R * 2 + GAP + nameW;
-  const left = -total / 2;
-
-  logoBadge(ctx, left + R, 0, R, badge, 3);
-
-  const tx = left + R * 2 + GAP;
-  if (name > 0) {
-    ctx.save();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = CREAM;
-    ctx.font = "54px KhangDisplay";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    ctx.shadowColor = "rgba(255,214,150,0.45)";
-    ctx.shadowBlur = 18;
-    /* resolves letter by letter */
-    const chars = [..."Khang"];
-    let x = tx;
-    chars.forEach((c, i) => {
-      ctx.globalAlpha = clamp01((name - (i / chars.length) * 0.5) / 0.5);
-      ctx.fillText(c, x, -2);
-      x += ctx.measureText(c).width;
-    });
-    ctx.restore();
-  }
-  if (rule > 0) {
-    ctx.fillStyle = JADE_L;
-    ctx.globalAlpha = rule;
-    ctx.fillRect(tx, 10, nameW * rule, 2);
-    ctx.globalAlpha = 1;
-  }
-  if (sub > 0) {
-    ctx.save();
-    ctx.globalAlpha = sub * 0.88;
-    ctx.fillStyle = CREAM;
-    ctx.font = "13px KhangMono";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    const label = "CHINESE · DIMSUM";
-    const lw = trackedWidth(ctx, label, 4.4);
-    tracked(ctx, label, tx + lw / 2, 31, 4.4);
-    ctx.restore();
-  }
-  ctx.restore();
-}
-
-/** Vertical lockup — the end card the film finishes on. */
-function logoLockupV(ctx, cx, cy, s, o) {
-  const { badge = 0, name = 0, rule = 0, sub = 0 } = o;
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.scale(s, s);
-
-  logoBadge(ctx, 0, -96, 92, badge, 5);
-
-  if (name > 0) {
-    ctx.save();
-    ctx.fillStyle = CREAM;
-    ctx.font = "104px KhangDisplay";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "alphabetic";
-    ctx.shadowColor = "rgba(255,214,150,0.35)";
-    ctx.shadowBlur = 30;
-    ctx.globalAlpha = name;
-    ctx.fillText("Khang", 0, lerp(66, 58, name));
-    ctx.restore();
-  }
-  if (rule > 0) {
-    ctx.fillStyle = JADE_L;
-    ctx.globalAlpha = rule;
-    const rw = 230 * rule;
-    ctx.fillRect(-rw / 2, 92, rw, 2.5);
-    ctx.globalAlpha = 1;
-  }
-  if (sub > 0) {
-    ctx.save();
-    ctx.globalAlpha = sub * 0.9;
-    ctx.fillStyle = CREAM;
-    ctx.font = "22px KhangMono";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    tracked(ctx, "CHINESE · DIMSUM", 0, 134, 9);
-    ctx.restore();
-  }
-  ctx.restore();
-}
-
-/** The board above the doors, lighting up. */
+/* ── The logo, lighting up on the signboard ──────────────────── *
+ * The same lockup the site wears in its header: a green roundel
+ * carrying 康, the name beside it, a jade hairline and the
+ * descriptor underneath.                                            */
 function drawSign(ctx, t) {
-  const on = seg(t, 6.6, 7.3);
+  const on = seg(t, 7.0, 7.7);
   if (on <= 0) return;
 
+  const cy = BOARD.y + BOARD.h / 2; // 353
   /* the board's lamps come up first */
-  const g = ctx.createRadialGradient(960, 352, 10, 960, 352, 430);
-  g.addColorStop(0, `rgba(255,214,150,${0.32 * on})`);
-  g.addColorStop(1, "rgba(255,214,150,0)");
+  const g = ctx.createRadialGradient(960, cy, 10, 960, cy, 460);
+  g.addColorStop(0, `rgba(255,214,140,${0.34 * on})`);
+  g.addColorStop(1, "rgba(255,214,140,0)");
   ctx.fillStyle = g;
-  ctx.fillRect(530, 212, 860, 300);
+  ctx.fillRect(BOARD.x - 180, BOARD.y - 90, BOARD.w + 360, BOARD.h + 180);
 
-  logoLockupH(ctx, 960, 352, 1.3, {
-    badge: seg(t, 6.8, 7.35),
-    name: seg(t, 7.1, 7.75),
-    rule: seg(t, 7.6, 7.95),
-    sub: seg(t, 7.75, 8.1),
-  });
+  /* lockup metrics */
+  const R = 54;
+  const GAP = 42;
+  const TEXT_W = 327;
+  const total = R * 2 + GAP + TEXT_W;
+  const left = 960 - total / 2;
+  const roundelX = left + R;
+  const textL = left + R * 2 + GAP;
+
+  /* ── the roundel ── */
+  const aMark = seg(t, 7.15, 7.85, easeOut);
+  if (aMark > 0) {
+    ctx.save();
+    ctx.globalAlpha = aMark;
+    ctx.translate(roundelX, cy);
+    ctx.scale(lerp(0.84, 1, aMark), lerp(0.84, 1, aMark));
+
+    const grad = ctx.createLinearGradient(-R, -R, R, R);
+    grad.addColorStop(0, GREEN);
+    grad.addColorStop(1, GREEN_D);
+    ctx.shadowColor = "rgba(22,163,74,0.55)";
+    ctx.shadowBlur = 26;
+    ctx.fillStyle = grad;
+    circle(ctx, 0, 0, R);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = CREAM;
+    ctx.lineWidth = 3.4;
+    circle(ctx, 0, 0, R);
+    ctx.stroke();
+
+    /* 康 */
+    const aCn = seg(t, 7.5, 8.1);
+    if (aCn > 0) {
+      ctx.globalAlpha = aMark * aCn;
+      ctx.fillStyle = CREAM;
+      ctx.font = `${Math.round(R * 1.18)}px KhangCn`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("康", 0, 2);
+    }
+    ctx.restore();
+  }
+
+  /* ── KHANG, letter by letter ── */
+  const aName = seg(t, 7.8, 8.5);
+  if (aName > 0) {
+    ctx.save();
+    ctx.fillStyle = CREAM;
+    ctx.font = "72px KhangDisplay";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.shadowColor = "rgba(255,214,140,0.45)";
+    ctx.shadowBlur = 18;
+    tracked(ctx, "KHANG", textL + TEXT_W / 2, 358, 17, (i, n) =>
+      clamp01((aName - (i / n) * 0.55) / 0.45),
+    );
+    ctx.restore();
+  }
+
+  /* ── jade hairline ── */
+  const aRule = seg(t, 8.4, 8.8);
+  if (aRule > 0) {
+    ctx.save();
+    ctx.globalAlpha = aRule;
+    const rw = TEXT_W * aRule;
+    const rg = ctx.createLinearGradient(textL, 0, textL + TEXT_W, 0);
+    rg.addColorStop(0, "rgba(22,163,74,0)");
+    rg.addColorStop(0.5, JADE_L);
+    rg.addColorStop(1, "rgba(22,163,74,0)");
+    ctx.fillStyle = rg;
+    ctx.fillRect(textL + (TEXT_W - rw) / 2, 374, rw, 2);
+    ctx.restore();
+  }
+
+  /* ── descriptor ── */
+  const aSub = seg(t, 8.6, 9.05);
+  if (aSub > 0) {
+    ctx.save();
+    ctx.globalAlpha = aSub * 0.9;
+    ctx.fillStyle = CREAM;
+    ctx.font = "15px KhangSans";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    tracked(ctx, "CHINESE · DIMSUM", textL + TEXT_W / 2, 400, 6.4);
+    ctx.restore();
+  }
 }
 
 /* ── Camera ──────────────────────────────────────────────────── *
- * Scale ~4.3 is a two-shot across the table; scale 1 frames the
- * whole shopfront. One continuous move, held at each end.           */
+ * Scale 4.3 is a two-shot across the table; scale 1 frames the whole
+ * shopfront. One continuous move, then a last gentle settle onto the
+ * sign once the name is lit.                                        */
 function camera(t) {
   const hold = seg(t, 0, 2.8, (u) => u); // linear drift while they talk
-  const pull = seg(t, 2.8, 6.8, easeInOut);
-  const settle = seg(t, 6.8, 10.0, (u) => u);
-  // The opening framing is kept wholly inside the glazing, otherwise the
-  // shopfront's plinth creeps into the bottom of what should read as a
-  // shot taken from inside the room.
+  const pull = seg(t, 2.8, 6.6, easeInOut);
+  const settle = seg(t, 8.4, 10.0, easeInOut);
   let scale;
   let cy;
-  if (pull >= 1) {
-    // the faintest push toward the sign, so the last beat is not frozen
-    scale = lerp(1.0, 1.035, settle);
-    cy = lerp(540, 520, settle);
+  if (t >= 6.6) {
+    // Only a hair closer: the complete entrance has to stay in frame.
+    scale = lerp(1.0, 1.12, settle);
+    cy = lerp(540, 508, settle);
   } else if (pull > 0) {
-    scale = expLerp(4.25, 1.0, pull);
-    cy = lerp(749, 540, pull);
+    // The opening framing is kept wholly inside the glazing, otherwise
+    // the shopfront's plinth creeps into the bottom of what should
+    // read as a shot taken from inside the room.
+    scale = expLerp(4.0, 1.0, pull);
+    cy = lerp(745, 540, pull);
   } else {
-    scale = expLerp(4.55, 4.25, hold);
-    cy = lerp(757, 749, hold);
+    scale = expLerp(4.3, 4.0, hold);
+    cy = lerp(751, 745, hold);
   }
   const cx = 960 + Math.sin(t * 0.42) * 2.0;
   return { scale, cx, cy };
@@ -1429,9 +1316,9 @@ function renderFrame(ctx, t, frame) {
   ctx.restore();
 
   /* vignette */
-  const vg = ctx.createRadialGradient(W / 2, H * 0.46, H * 0.3, W / 2, H * 0.5, H * 0.95);
+  const vg = ctx.createRadialGradient(W / 2, H * 0.46, H * 0.32, W / 2, H * 0.5, H * 0.98);
   vg.addColorStop(0, "rgba(0,0,0,0)");
-  vg.addColorStop(1, "rgba(0,0,0,0.4)");
+  vg.addColorStop(1, "rgba(6,4,2,0.4)");
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, H);
 
@@ -1444,28 +1331,6 @@ function renderFrame(ctx, t, frame) {
     for (let x = 0; x < W; x += 256) ctx.drawImage(g, x, y);
   }
   ctx.restore();
-
-  /* ── end card: the shopfront recedes and the logo steps forward ── */
-  const veil = seg(t, 8.2, 9.0);
-  if (veil > 0) {
-    ctx.fillStyle = `rgba(6,10,12,${0.972 * veil})`;
-    ctx.fillRect(0, 0, W, H);
-    /* a breath of warm light behind the mark */
-    const warm = ctx.createRadialGradient(W / 2, H * 0.46, 40, W / 2, H * 0.46, 620);
-    warm.addColorStop(0, `rgba(255,206,140,${0.13 * veil})`);
-    warm.addColorStop(1, "rgba(255,206,140,0)");
-    ctx.fillStyle = warm;
-    ctx.fillRect(0, 0, W, H);
-  }
-  const card = seg(t, 8.4, 9.2, easeOut);
-  if (card > 0) {
-    logoLockupV(ctx, W / 2, H * 0.47, lerp(0.94, 1, card), {
-      badge: seg(t, 8.4, 8.95, easeOut),
-      name: seg(t, 8.72, 9.3),
-      rule: seg(t, 9.12, 9.45),
-      sub: seg(t, 9.28, 9.62),
-    });
-  }
 
   /* fade up from black */
   const fade = 1 - seg(t, 0, 0.42, (u) => u);
