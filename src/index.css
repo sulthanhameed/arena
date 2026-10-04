@@ -460,7 +460,11 @@ body {
   backface-visibility: hidden;
 }
 
+/* Plates stack inside their shot so several frames of the same take
+   can cross-fade over one shared camera move. */
 .intro-plate {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;

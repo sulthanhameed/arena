@@ -2,20 +2,24 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 /**
  * ─────────────────────────────────────────────────────────────
- *  Khang entrance film — a cinematic pull-back
+ *  Khang entrance film
  * ─────────────────────────────────────────────────────────────
  *
- *  The camera retreats through the restaurant in five moves,
- *  each plate framed a little wider than the last, cross-dissolved
- *  so the whole thing reads as one continuous dolly-back:
+ *  Opens on a guest enjoying her meal, then retreats out of the
+ *  restaurant and finishes on the name above the door:
  *
- *    0.00s  a dressed table mid-service — steamers, tea, steam
- *    1.15s  the banquette it sits in, under its paper lantern
- *    2.30s  the length of the dining room
- *    3.45s  the threshold, daylight spilling through open doors
- *    4.60s  the whole facade at dusk
- *    5.40s  the signboard lights and the name resolves on it
- *    6.90s  the film fades and the site settles into place
+ *    0.0s  she is mid-conversation at her table
+ *    0.8s  she lifts a dumpling and takes a bite
+ *    1.6s  she settles back, enjoying it
+ *    2.5s  the camera pulls back down the dining room
+ *    3.7s  past the threshold, daylight through the open doors
+ *    4.9s  out to the whole facade at dusk
+ *    5.65s the signboard lights and 康 / KHANG resolves on it
+ *    7.2s  the film fades and the site settles into place
+ *
+ *  The three opening beats are layers of ONE shot, so they share a
+ *  single unbroken camera move: cross-fading them reads as the guest
+ *  moving rather than as three separate frames being swapped.
  *
  *  Skippable throughout; `prefers-reduced-motion` never mounts it.
  */
@@ -27,76 +31,114 @@ interface Props {
   onPhaseChange?: (phase: IntroPhase) => void;
 }
 
-/** A seven-second film is a lot to sit through twice. */
-const PLAY_ONCE_PER_SESSION = true;
+/** Set true to greet each browser tab only once. Kept false so the film
+ *  plays on every load — a "played" flag in sessionStorage survives tab
+ *  reloads, which makes the intro look broken while you are working on it. */
+const PLAY_ONCE_PER_SESSION = false;
 const SESSION_KEY = "khang_intro_played";
 
 /* ─── The shot list ───────────────────────────────────────────
-   `scale` runs from tight to wide: every shot is still easing
-   outwards as the next one dissolves over it, which is what
-   sells the retreat as continuous rather than as five stills. */
-interface Shot {
+   Every shot is framed wider than the last and still easing
+   outwards as the next dissolves over it, which is what sells the
+   retreat as one continuous move rather than six stills. */
+interface Layer {
   src: string;
-  /** When the dissolve onto this shot begins (ms). */
+  /** When this layer dissolves in (ms from the start of the film). */
   at: number;
-  /** Scale at the start and end of the shot's own drift. */
+  alt: string;
+  /** Overrides the standard dissolve. The guest's poses use a shorter
+   *  one: at the full length the overlap ghosts her arm into two
+   *  places at once instead of reading as a single movement. */
+  fade?: number;
+}
+
+interface Shot {
+  id: string;
+  /** Scale at the start and end of this shot's own drift. */
   from: number;
   to: number;
-  /** How long the drift takes — always outlives the shot on screen. */
+  /** Always outlives the shot's time on screen, so it never sits still. */
   duration: number;
-  alt: string;
+  /** Stacked frames sharing this shot's camera move. */
+  layers: Layer[];
 }
 
 const SHOTS: Shot[] = [
   {
-    src: "/intro/shot-01-table.jpg",
-    at: 0,
+    id: "guest",
     from: 1.26,
-    to: 1.08,
-    duration: 2600,
-    alt: "A table set with bamboo steamers and a teapot",
+    to: 1.06,
+    duration: 3300,
+    layers: [
+      {
+        src: "/intro/01-speaking.jpg",
+        fade: 500,
+        at: 0,
+        alt: "A guest talking over a table of dim sum",
+      },
+      {
+        src: "/intro/02-bite.jpg",
+        fade: 500,
+        at: 800,
+        alt: "The guest lifting a dumpling with chopsticks",
+      },
+      {
+        src: "/intro/03-enjoy.jpg",
+        fade: 500,
+        at: 1600,
+        alt: "The guest enjoying her food",
+      },
+    ],
   },
   {
-    src: "/intro/shot-02-booth.jpg",
-    at: 1200,
-    from: 1.2,
-    to: 1.05,
-    duration: 2500,
-    alt: "A corner banquette beneath a paper lantern",
-  },
-  {
-    src: "/intro/shot-03-room.jpg",
-    at: 2400,
-    from: 1.17,
-    to: 1.04,
-    duration: 2500,
-    alt: "The dining room and its row of lanterns",
-  },
-  {
-    src: "/intro/shot-04-threshold.jpg",
-    at: 3600,
-    from: 1.14,
+    id: "room",
+    from: 1.16,
     to: 1.03,
-    duration: 2400,
-    alt: "Daylight through the restaurant's open doors",
+    duration: 2700,
+    layers: [
+      {
+        src: "/intro/04-room.jpg",
+        at: 2500,
+        alt: "The dining room and its row of lanterns",
+      },
+    ],
   },
   {
-    src: "/intro/shot-05-facade.jpg",
-    at: 4800,
+    id: "threshold",
+    from: 1.13,
+    to: 1.02,
+    duration: 2600,
+    layers: [
+      {
+        src: "/intro/05-threshold.jpg",
+        at: 3700,
+        alt: "Daylight through the restaurant's open doors",
+      },
+    ],
+  },
+  {
+    id: "facade",
     from: 1.12,
     to: 1.0,
-    duration: 3400,
-    alt: "The restaurant entrance at dusk",
+    duration: 3600,
+    layers: [
+      {
+        src: "/intro/06-facade.jpg",
+        at: 4900,
+        alt: "The restaurant entrance at dusk",
+      },
+    ],
   },
 ];
 
 const FADE = 700; // cross-dissolve length, ms
-const SIGN_AT = 5500; // the board lights up
-const EXIT_AT = 7100; // the film starts handing over to the site
+const SIGN_AT = 5650; // the board lights up
+const EXIT_AT = 7200; // the film starts handing over to the site
 const EXIT_MS = 900; // and how long that takes
 
-/** Shot 1 must be decoded before we start; the rest can arrive late. */
+/** The opening frame must be decoded before we start; the rest can arrive late. */
 const FIRST_FRAME_TIMEOUT = 2600;
+const FIRST_FRAME = SHOTS[0].layers[0].src;
 
 function prefersReducedMotion(): boolean {
   return (
@@ -116,7 +158,7 @@ export function shouldSkipIntro(): boolean {
   }
 }
 
-/** Resolves when the image is decoded, or rejects — never hangs. */
+/** Resolves when the image is in cache, or rejects — never hangs. */
 function preload(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -131,7 +173,7 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
   const [phase, setPhase] = useState<IntroPhase>(() =>
     shouldSkipIntro() ? "done" : "playing",
   );
-  // Nothing animates until the opening plate is actually on the wire.
+  // Nothing animates until the opening frame is actually on the wire.
   const [rolling, setRolling] = useState(false);
 
   /**
@@ -167,8 +209,8 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
     };
   }, [phase]);
 
-  // Wait for the opening plate, then roll. If it can't be fetched the
-  // intro steps aside entirely rather than gating the site behind it.
+  // Wait for the opening frame, then roll. If it cannot be fetched the
+  // film steps aside entirely rather than gating the site behind it.
   useEffect(() => {
     if (phase !== "playing") return;
     let cancelled = false;
@@ -180,7 +222,7 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
       ),
     );
 
-    Promise.race([preload(SHOTS[0].src), timeout])
+    Promise.race([preload(FIRST_FRAME), timeout])
       .then(() => {
         if (!cancelled) setRolling(true);
       })
@@ -188,9 +230,11 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
         if (!cancelled) setPhase("done");
       });
 
-    // The rest stream in behind the first shot; failures are harmless
-    // because each plate only has to be there when it dissolves in.
-    SHOTS.slice(1).forEach((shot) => void preload(shot.src).catch(() => {}));
+    // The rest stream in behind it; each frame only has to be there by
+    // the time it dissolves in, so failures here are harmless.
+    SHOTS.flatMap((shot) => shot.layers)
+      .filter((layer) => layer.src !== FIRST_FRAME)
+      .forEach((layer) => void preload(layer.src).catch(() => {}));
 
     return () => {
       cancelled = true;
@@ -226,7 +270,7 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
 
   const exiting = phase === "exiting";
 
-  /** Animations stay paused until the first plate is ready. */
+  /** Animations stay paused until the opening frame is ready. */
   const cue = useMemo(
     () =>
       (delay: number, extra: React.CSSProperties = {}): React.CSSProperties =>
@@ -250,72 +294,67 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
       onClick={exiting ? undefined : finish}
     >
       <div className="intro-film absolute inset-0 overflow-hidden">
-        {/* ─── The shots ─── */}
-        {SHOTS.map((shot, i) => (
+        {SHOTS.map((shot) => (
           <div
-            key={shot.src}
-            className="intro-dissolve absolute inset-0"
-            style={cue(shot.at, { ["--fade" as string]: `${FADE}ms` })}
+            key={shot.id}
+            className="intro-frame intro-shot"
+            style={cue(shot.layers[0].at, {
+              ["--from" as string]: shot.from,
+              ["--to" as string]: shot.to,
+              ["--dur" as string]: `${shot.duration}ms`,
+            })}
           >
-            <div
-              className="intro-frame intro-shot"
-              style={cue(shot.at, {
-                ["--from" as string]: shot.from,
-                ["--to" as string]: shot.to,
-                ["--dur" as string]: `${shot.duration}ms`,
-              })}
-            >
+            {/* Layers share this shot's camera move, so cross-fading
+                them reads as movement inside a single take. */}
+            {shot.layers.map((layer) => (
               <img
-                src={shot.src}
-                alt={shot.alt}
-                className="intro-plate"
+                key={layer.src}
+                src={layer.src}
+                alt={layer.alt}
+                className="intro-plate intro-dissolve"
                 draggable={false}
-                // The opening plate is what everyone waits on.
-                fetchPriority={i === 0 ? "high" : "low"}
+                fetchPriority={layer.src === FIRST_FRAME ? "high" : "low"}
                 decoding="async"
+                style={cue(layer.at, {
+                  ["--fade" as string]: `${layer.fade ?? FADE}ms`,
+                })}
               />
+            ))}
 
-              {/* The sign is parented to the facade plate, so it stays
-                  welded to the board however the window is shaped. */}
-              {i === SHOTS.length - 1 && (
-                <>
-                  <span
-                    className="intro-sign-glow"
-                    style={cue(SIGN_AT)}
-                  />
-                  <span className="intro-sign">
-                    <span
-                      className="intro-mark font-cn"
-                      style={cue(SIGN_AT)}
-                    >
-                      康
-                    </span>
-                    <span
-                      className="intro-name font-display"
-                      style={cue(SIGN_AT + 220)}
-                    >
-                      KHANG
-                    </span>
-                    <span
-                      className="intro-sign-rule"
-                      style={cue(SIGN_AT + 440)}
-                    />
-                    <span
-                      className="intro-sign-sub font-mono"
-                      style={cue(SIGN_AT + 540, {
-                        ["--fade" as string]: "700ms",
-                      })}
-                    >
-                      Chinese · Dimsum
-                    </span>
+            {/* The sign is parented to the facade plate, so it stays
+                welded to the board however the window is shaped. */}
+            {shot.id === "facade" && (
+              <>
+                <span className="intro-sign-glow" style={cue(SIGN_AT)} />
+                <span className="intro-sign">
+                  <span className="intro-mark font-cn" style={cue(SIGN_AT)}>
+                    康
                   </span>
-                </>
-              )}
-            </div>
+                  <span
+                    className="intro-name font-display"
+                    style={cue(SIGN_AT + 220)}
+                  >
+                    KHANG
+                  </span>
+                  <span
+                    className="intro-sign-rule"
+                    style={cue(SIGN_AT + 440)}
+                  />
+                  <span
+                    className="intro-sign-sub font-mono"
+                    style={cue(SIGN_AT + 540, {
+                      ["--fade" as string]: "700ms",
+                    })}
+                  >
+                    Chinese · Dimsum
+                  </span>
+                </span>
+              </>
+            )}
           </div>
         ))}
 
-        {/* Grade + grain, tying the five plates into one piece of film */}
+        {/* Grade + grain, tying the plates into one piece of film */}
         <div className="intro-grade pointer-events-none absolute inset-0" />
         <div className="intro-grain pointer-events-none" />
       </div>
