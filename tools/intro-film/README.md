@@ -1,17 +1,19 @@
 # The Khang entrance film
 
 `render.cjs` draws every frame of the intro video that plays over the
-homepage — nine seconds, 1920 × 1080, 30 fps, 270 frames.
+homepage — ten seconds, 1920 × 1080, 30 fps, 300 frames.
 
-It opens close on two guests at a table. One of them is talking; the
-other lifts a dumpling with her chopsticks, eats it, and goes on
-chewing. From three seconds the camera retreats in one unbroken move,
-back through the window, past the lanterns and screens of the dining
-room, until the whole shopfront is in frame — and the board above the
-doors lights up with 康 / KHANG.
+It opens close on two guests at a table in a lamplit Cantonese dining
+room. One of them is talking; the other lifts a dumpling with his
+chopsticks, eats it, and goes on chewing. From 2.8 seconds the camera
+retreats in one unbroken move, back through the window, past the red
+lanterns and lattice screens, until the whole shopfront is in frame —
+the board above the doors lights with the Khang logo, the street falls
+away, and the film finishes on the mark alone.
 
-Everything is drawn: the performance, the camera move and the sign are
-all baked into the video, so the site only has to play it.
+Everything is drawn: the performance, the camera move, the sign and
+the end card are all baked into the video, so the site only has to
+play it.
 
 ## Running it
 
@@ -69,14 +71,33 @@ the end, and the retreat between them is a single continuous zoom.
   shopfront's plinth creeps into the bottom of what should read as a
   shot from inside the room. The glazing bars themselves fade up as the
   camera backs out through them.
-- **The mouths are holes.** Each head is a solid ink silhouette; the
-  mouth is an ivory ellipse cut back out of it, and animating its
-  height is what makes talking and chewing legible on a figure with no
-  face at all.
+- **The heads are real profiles, not circles.** `headPath` is a single
+  bezier outline — forehead, brow, the dip at the bridge, nose, lips,
+  chin, jaw, skull — and its chin control points take a `jaw`
+  parameter, so the whole lower face opens rather than only a mouth
+  shape moving. Over that go a brow, a lidded eye with a catchlight,
+  an ear, a soft gradient down the shaded side, and the dark opening
+  of the mouth with a hint of teeth: enough that the guests read as
+  two particular people at the opening framing, and still resolve as
+  people when they are an inch tall behind the glass.
+- **Colour does the work the silhouettes used to.** Cream plaster and
+  a panelled wainscot, walnut furniture, red silk lanterns with brass
+  caps, celadon tea things, bamboo steamers. A solid dark dado was
+  tried first and read as a brown band across the bottom third of the
+  opening shot, swallowing the chairs — hence the cream panelling.
+- The guests wear the two halves of the brand: jade green and
+  charcoal, over a cream mandarin collar.
 - Arms are round-capped strokes interpolated between a rest pose and a
   mouth pose; the chopsticks rotate with them. The far arm is drawn
   *behind* the torso — over it, the upper arm reads as a strap across
   the chest.
 - `tracked()` draws letter-spaced text a character at a time, because
   canvas `letterSpacing` is unreliable across implementations, and the
-  per-character alpha is what lets KHANG resolve one letter at a time.
+  per-character alpha is what lets the name resolve one letter at a
+  time.
+- **The logo is the site's own.** `logoBadge` is the navbar mark — a
+  jade disc, cream ring, 康 in Ma Shan Zheng — and `logoLockupH` /
+  `logoLockupV` arrange it with the Playfair wordmark and the Space
+  Grotesk descriptor. The horizontal lockup goes on the shopfront
+  board; the vertical one is the end card. Same mark in both places,
+  so the film hands over to a page already wearing it.
