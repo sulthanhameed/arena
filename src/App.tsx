@@ -19,10 +19,10 @@ import SearchModal from "./components/SearchModal";
 import AuthModal from "./components/AuthModal";
 import AdminDashboard from "./components/AdminDashboard";
 import ScrollProgressBar from "./components/ScrollProgressBar";
-import IntroCurtain, {
+import IntroCinematic, {
   shouldSkipIntro,
   type IntroPhase,
-} from "./components/IntroCurtain";
+} from "./components/IntroCinematic";
 import { CartIcon } from "./components/Icons";
 
 function FloatingCartButton() {
@@ -99,7 +99,7 @@ export default function App() {
         <div className={stageClass}>
           <Shell />
         </div>
-        <IntroCurtain onPhaseChange={setIntroPhase} />
+        <IntroCinematic onPhaseChange={setIntroPhase} />
       </CartProvider>
     </AuthProvider>
   );
