@@ -12,33 +12,21 @@ the picture washes to white and the brand lockup resolves on its own
 card: the green roundel carrying 康, then KHANG, a jade hairline and
 CHINESE · DIMSUM, the same mark the site wears in its header.
 
-The guests are **drawn as people** on the reference pictogram's
-proportions: the same square front-on stance, the same broad
-trapezius sloping out to a wide shoulder cap — but with skin, hair,
-cloth and a working face.
+The guests are **flat pictograms in profile**, facing each other
+across the table on two chairs, legs and feet in frame — the staging
+of the reference the design came from. One eats with chopsticks, the
+other drinks from a teacup, and around 1.9 s both hands are up at
+once, which is the reference's composition.
 
-They face camera, and that is not a style choice. The sloping
-shoulder is the whole character of the figure and it only exists
-front-on; drawn in profile it flattens out. Hence the banquette,
-which seats both guests square to camera side by side, and hides the
-legs behind the table where a seated figure gets ugly.
+They are solid ink on a coloured room. The restaurant keeps its
+plaster, oak, lanterns and screens; the two figures are the only
+black in the frame, which is what makes them read instantly at any
+size in the pull-back.
 
-**Form is carried by gradient, never by outline.** There is not a
-single black contour anywhere on these two; every edge is a tonal
-step. That is the whole difference between a figure that reads as
-drawn and one that reads as clip-art.
-
-Because they have mouths, speech is now shown rather than implied —
-the jaw opens on two overlaid rates so it never ticks like a
-metronome, and the hand only has to support the sentence instead of
-carrying it alone. The eater's chew drives the same mouth at a
-slower rate plus a small head bob. Both blink, on offset cycles: a
-face that never blinks reads as dead.
-
-The end card is **white and empty of the restaurant**. A mark fighting
-a lit shopfront for attention loses; given its own ground it reads in
-a single glance, and because the site behind the overlay is also
-white, the film hands over without a visible seam.
+With no faces, every beat has to be pose: the lift, the tip of the
+cup, the chew. The camera's bottom edge is pinned to the floor line
+so the whole tableau — chairs, legs, feet — sits in frame the way
+the reference does.
 
 Everything is drawn: the performance, the camera move and both the
 shopfront sign and the end card are baked into the video, so the site
@@ -101,22 +89,21 @@ the end, and the retreat between them is a single continuous zoom.
   shopfront's plinth creeps into the bottom of what should read as a
   shot from inside the room. The glazing bars themselves fade up as the
   camera backs out through them.
-- Figures are mirrored as a whole with `scale(side, 1)`, so the acting
-  arm can always be authored at local −x and still end up facing the
-  companion.
-- One dial, `j`, widens the jaw inside `headPath` — a square male jaw
-  and a tapered female one off the same skull, rather than two
-  drawings to keep in sync.
-- Seat the head properly. At the first attempt 64 units of bare neck
-  showed between chin and collar and both guests read as giraffes;
-  the visible neck wants to be about a quarter of head height.
-- Limbs are three overlaid strokes — a mid-tone at full width, a
-  narrow light one offset up, a narrower dark one offset down. A
-  single fat stroke with one hard highlight down it reads as a
-  sausage with a stripe.
-- She is in clay, not the ivory of the design target. Against a cream
-  plaster wall an ivory blouse simply dissolves; the room needed a
-  third colour against the green and the oak.
+- Figures are drawn facing right and mirrored with `scale(dir, 1)`,
+  so body, limbs and hair-bun flip as one piece. The left guest keeps
+  a bun: it is the only asymmetry on the head, and without it a head
+  tilt on a plain circle is invisible.
+- **A cup is not held like chopsticks.** It needed its own mouth pose
+  — lower and further back — plus its own angle ramp, from upright on
+  the table to tipped at the lips. Driven off the chopstick pose she
+  drank through her forehead.
+- `arc(a,b,c,d)` is one lift-hold-lower envelope shared by both
+  guests, offset in time. Two hand-rolled timelines drift apart the
+  moment either is retimed.
+- The camera's bottom edge is pinned to the floor line rather than
+  centred, because the floor is also the bottom of the glazing: go
+  one pixel below it and the shopfront's plinth appears inside what
+  is supposed to be a shot from inside the room.
 - **The arms are a second pass.** `drawFigure` lays down the body and
   head, the table goes over them, then `drawArms` runs again on top —
   otherwise the hands are drawn behind the table and the whole
