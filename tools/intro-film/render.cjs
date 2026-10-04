@@ -62,6 +62,9 @@ const CELADON = "#dfe6d9";
 const CREAM = "#faf6ef";
 const WHITE = "#ffffff";
 
+const BANQ = "#2f5d43";
+const BANQ_D = "#214430";
+
 const INK = "#15181a"; // the guests
 const INK_2 = "#232a2e"; // guests further back
 
@@ -177,109 +180,190 @@ function roundel(ctx, cx, cy, r, ring) {
 }
 
 /* ── The guests ──────────────────────────────────────────────── *
- * Pictograms: a circle for the head, a tapered body, round-capped
- * bars for the limbs, no face. Everything that has to read — the
- * lift, the bite, the chewing, the talking — has to read as pose,
- * because there are no features to carry it.                      */
+ * Built to the reference pictogram's construction, part for part:
+ *
+ *   · a circle for the head, held clear of the body by a gap
+ *   · a yoke whose shoulder line slopes steeply down and out
+ *   · arms hung off the shoulder points, so a thin wedge of
+ *     background separates each arm from the torso
+ *   · long tapered limbs ending in plain round caps
+ *
+ * They are seen FRONT-ON, because that silhouette only exists
+ * front-on: in profile the sloping shoulder — which is the whole
+ * character of the thing — disappears. Hence the banquette, which
+ * seats both guests square to camera, side by side, and hides the
+ * legs behind the table where a seated pictogram gets ugly.
+ *
+ * "Realistic" is carried by modelling rather than detail: the head
+ * is shaded as a sphere instead of filled as a disc, the body
+ * carries a top-lit gradient, and both drop contact shadows. The
+ * geometry stays a pictogram; only the rendering gains dimension.
+ */
 function drawFigure(ctx, o) {
   const {
-    dir, // +1 faces right, -1 faces left
-    lift = 0, // 0 hand at the table … 1 hand at the mouth
-    gesture = 0, // 0 hand at the table … 1 raised, making a point
-    nod = 0, // head offset, units
-    tilt = 0, // head rotation, radians
+    side = 1, // +1 sits right of the pair, -1 sits left
+    lift = 0, // 0 hand on the table … 1 chopsticks at the mouth
+    gesture = 0, // 0 hand on the table … 1 raised, mid-sentence
+    nod = 0,
+    lean = 0, // head tilt toward the other guest, radians
     breath = 0,
     bun = false,
-    holding = 0, // dumpling scale at the chopstick tip
+    holding = 0,
     sticks = false,
-    ink = INK,
+    dark = false, // the further-off extras sit a shade lighter
   } = o;
 
-  ctx.save();
-  ctx.scale(dir, 1); // drawn facing right, mirrored as a whole
-
-  const SHO = { x: 6, y: -330 + breath };
-  const HEADC = { x: 20, y: -404 + breath + nod };
+  const SHO_X = 102; // shoulder point, outer edge
+  const SHO_Y = -340;
+  const NECK_X = 27;
+  const NECK_Y = -378;
+  const PIT = -300; // armpit: below here the arms separate
+  const CHEST_X = 64;
+  const WAIST_X = 59;
+  const HIP_Y = -138;
   const R = 52;
+  const HX = -side * 7; // head sits a touch toward the companion
+  const HY = -444 + breath + nod;
 
-  /* chair */
-  ctx.fillStyle = WOOD_D;
-  rrect(ctx, -120, -152, 13, 144, 5);
-  ctx.fill();
-  rrect(ctx, 22, -152, 13, 144, 5);
-  ctx.fill();
-  rrect(ctx, -124, -330, 15, 184, 6);
-  ctx.fill();
-  rrect(ctx, -138, -330, 48, 15, 6);
-  ctx.fill();
-  rrect(ctx, -116, -74, 142, 9, 4);
-  ctx.fill();
-  ctx.fillStyle = WOOD;
-  rrect(ctx, -128, -166, 168, 16, 5);
-  ctx.fill();
-  ctx.fillStyle = WOOD_L;
-  ctx.fillRect(-128, -166, 168, 3);
+  const inkTop = dark ? "#2b3338" : "#1e262b";
+  const inkBot = dark ? "#171d21" : "#0c1013";
+  const inkFlat = dark ? "#222a2e" : "#141a1e";
 
-  ctx.fillStyle = ink;
+  ctx.save();
+  ctx.scale(side, 1); // acting arm always drawn at local -x
 
-  /* leg: thigh along the seat, shin to the floor, foot */
-  limb(ctx, -8, -158, 80, -152, 40, ink);
-  limb(ctx, 80, -152, 72, -22, 34, ink);
-  rrect(ctx, 48, -30, 64, 24, 11);
-  ctx.fill();
-
-  /* body: one clean tapered mass, shoulders dropping into the arms */
+  /* contact shadow on the banquette behind */
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = "#000";
   ctx.beginPath();
-  ctx.moveTo(-50, -148);
-  ctx.quadraticCurveTo(-58, -248, -46, -316);
-  ctx.quadraticCurveTo(-32, -348, 4, -348);
-  ctx.quadraticCurveTo(40, -348, 52, -314);
-  ctx.quadraticCurveTo(62, -244, 56, -148);
+  ctx.ellipse(8, -186, 116, 30, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  const armPath = (sx, sy, ex, ey, hx2, hy2, w1, w2) => {
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = inkFlat;
+    ctx.lineWidth = w1;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+    ctx.lineWidth = w2;
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(hx2, hy2);
+    ctx.stroke();
+  };
+
+  /* yoke: the sloping shoulder line, in one piece with the chest */
+  const yg = ctx.createLinearGradient(0, SHO_Y, 0, HIP_Y);
+  yg.addColorStop(0, inkTop);
+  yg.addColorStop(1, inkBot);
+  ctx.fillStyle = yg;
+  ctx.beginPath();
+  ctx.moveTo(-NECK_X, NECK_Y);
+  ctx.lineTo(-SHO_X + 14, SHO_Y - 8);
+  ctx.quadraticCurveTo(-SHO_X, SHO_Y - 1, -SHO_X, SHO_Y + 16);
+  ctx.lineTo(-SHO_X + 6, PIT);
+  ctx.lineTo(SHO_X - 6, PIT);
+  ctx.lineTo(SHO_X, SHO_Y + 16);
+  ctx.quadraticCurveTo(SHO_X, SHO_Y - 1, SHO_X - 14, SHO_Y - 8);
+  ctx.lineTo(NECK_X, NECK_Y);
   ctx.closePath();
   ctx.fill();
 
-  /* the resting arm, reaching onto the table */
-  limb(ctx, SHO.x + 12, SHO.y + 30, 92, -250, 27, ink);
-  limb(ctx, 92, -250, 146, -242, 24, ink);
+  /* torso, narrower than the shoulders — this is what opens the
+     wedge of background between body and arm */
+  ctx.beginPath();
+  ctx.moveTo(-CHEST_X, PIT - 34);
+  ctx.lineTo(-WAIST_X, HIP_Y);
+  ctx.lineTo(WAIST_X, HIP_Y);
+  ctx.lineTo(CHEST_X, PIT - 34);
+  ctx.closePath();
+  ctx.fill();
 
-  /* head — a plain circle, held clear of the shoulders like the
-     pictogram it is modelled on */
+  /* head — shaded as a sphere, which is the whole of the realism */
   ctx.save();
-  ctx.translate(HEADC.x, HEADC.y);
-  ctx.rotate(tilt);
-  ctx.fillStyle = ink;
-  circle(ctx, 0, 0, R);
+  ctx.translate(0, NECK_Y);
+  ctx.rotate(-lean);
+  ctx.translate(0, -NECK_Y);
+  const hg = ctx.createRadialGradient(
+    HX - R * 0.34, HY - R * 0.4, R * 0.12,
+    HX, HY, R * 1.16,
+  );
+  hg.addColorStop(0, dark ? "#333c42" : "#2a333a");
+  hg.addColorStop(0.62, dark ? "#232b30" : "#171e23");
+  hg.addColorStop(1, dark ? "#141a1d" : "#080b0d");
+  ctx.fillStyle = hg;
+  circle(ctx, HX, HY, R);
   ctx.fill();
   if (bun) {
-    circle(ctx, -R * 0.94, -R * 0.44, R * 0.33);
+    ctx.fillStyle = inkBot;
+    circle(ctx, HX + R * 0.9, HY - R * 0.52, R * 0.32);
     ctx.fill();
   }
   ctx.restore();
 
-  /* the acting arm: rest → mouth (lift) or rest → raised (gesture) */
+  ctx.restore();
+}
+
+/** The arms, drawn in a second pass after the table so the hands
+ *  land on the surface instead of behind it. */
+function drawArms(ctx, o) {
+  const {
+    side = 1, lift = 0, gesture = 0, holding = 0, sticks = false, dark = false,
+  } = o;
+  const SHO_X = 102;
+  const SHO_Y = -340;
+  const inkFlat = dark ? "#222a2e" : "#141a1e";
+
+  ctx.save();
+  ctx.scale(side, 1);
+
+  const armPath = (sx, sy, ex, ey, hx2, hy2, w1, w2) => {
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = inkFlat;
+    ctx.lineWidth = w1;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+    ctx.lineWidth = w2;
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(hx2, hy2);
+    ctx.stroke();
+  };
+
+  /* outer arm — hangs from the shoulder point, forearm onto the table */
+  armPath(SHO_X - 16, SHO_Y + 14, SHO_X - 2, -254, 62, -202, 31, 27);
+
+  /* acting arm: one rest pose blended toward a mouth pose and a
+     gesture pose, so the same limb either feeds its owner or
+     talks for them */
   const u = easeInOut(clamp01(lift));
   const g = clamp01(gesture);
-  const REST = { ex: 78, ey: -266, hx: 142, hy: -238 };
-  const MOUTH = { ex: 116, ey: -280, hx: 130, hy: HEADC.y + 44 };
-  const GEST = { ex: 44, ey: -266, hx: 108, hy: -346 };
+  const REST = { ex: -(SHO_X - 6), ey: -256, hx: -58, hy: -200 };
+  const MOUTH = { ex: -(SHO_X + 2), ey: -276, hx: -34, hy: -348 };
+  const GEST = { ex: -(SHO_X + 6), ey: -268, hx: -90, hy: -374 };
   const ex = REST.ex + u * (MOUTH.ex - REST.ex) + g * (GEST.ex - REST.ex);
   const ey = REST.ey + u * (MOUTH.ey - REST.ey) + g * (GEST.ey - REST.ey);
   const hx = REST.hx + u * (MOUTH.hx - REST.hx) + g * (GEST.hx - REST.hx);
   const hy = REST.hy + u * (MOUTH.hy - REST.hy) + g * (GEST.hy - REST.hy);
-  limb(ctx, SHO.x + 4, SHO.y + 22, ex, ey, 28, ink);
-  limb(ctx, ex, ey, hx, hy, 25, ink);
+  armPath(-(SHO_X - 16), SHO_Y + 14, ex, ey, hx, hy, 31, 27);
 
-  /* chopsticks, angled with whatever the hand is doing */
+  /* chopsticks — angle solved so the tip lands on the rim of the
+     head circle at the mouth pose, never inside it */
   if (sticks) {
-    /* pointing back over the hand toward the mouth, never across the
-       head: at the mouth pose the tip lands exactly on the rim of the
-       head circle, which is where the mouth would be. */
-    const ang = lerp(-2.958, -2.638, u);
-    const len = 66;
-    const ox = -Math.sin(ang) * 6;
-    const oy = Math.cos(ang) * 6;
+    const ang = lerp(-0.42, -1.057, u);
+    const len = 50;
+    const ox = -Math.sin(ang) * 5.5;
+    const oy = Math.cos(ang) * 5.5;
     ctx.strokeStyle = "#bc8e55";
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 5.5;
     ctx.lineCap = "round";
     for (const k of [-1, 1]) {
       ctx.beginPath();
@@ -288,126 +372,152 @@ function drawFigure(ctx, o) {
       ctx.stroke();
     }
     if (holding > 0.02) {
-      const dx = hx + (len + 4) * Math.cos(ang);
-      const dy = hy + (len + 4) * Math.sin(ang);
-      const r = 16 * holding;
+      const dx = hx + (len + 3) * Math.cos(ang);
+      const dy = hy + (len + 3) * Math.sin(ang);
+      const r = 15 * holding;
       ctx.fillStyle = CREAM;
       ctx.beginPath();
       ctx.ellipse(dx, dy, r, r * 0.86, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = "#ddc9a6";
       ctx.lineWidth = 2;
-      for (const a of [-0.55, 0.55]) {
+      for (const aa of [-0.55, 0.55]) {
         ctx.beginPath();
-        ctx.moveTo(dx + Math.sin(a) * r * 0.7, dy - r * 0.76);
-        ctx.lineTo(dx + Math.sin(a) * r * 0.25, dy + r * 0.5);
+        ctx.moveTo(dx + Math.sin(aa) * r * 0.7, dy - r * 0.76);
+        ctx.lineTo(dx + Math.sin(aa) * r * 0.25, dy + r * 0.5);
         ctx.stroke();
       }
     }
   }
-
   ctx.restore();
 }
 
-/* ── Table setting ───────────────────────────────────────────── */
+/* ── The table, seen front-on ────────────────────────────────── */
 function drawTable(ctx, t) {
-  const TOP = -232;
+  const FAR = -212;
+  const NEAR = -178;
 
-  ctx.fillStyle = WOOD;
-  rrect(ctx, -200, TOP, 400, 22, 7);
+  /* shadow the table casts back onto the banquette */
+  ctx.save();
+  ctx.globalAlpha = 0.14;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(-540, FAR - 14, 1080, 16);
+  ctx.restore();
+
+  /* surface: a shallow trapezoid, read from slightly above */
+  const sg = ctx.createLinearGradient(0, FAR, 0, NEAR);
+  sg.addColorStop(0, WOOD_L);
+  sg.addColorStop(1, WOOD);
+  ctx.fillStyle = sg;
+  ctx.beginPath();
+  ctx.moveTo(-498, FAR);
+  ctx.lineTo(498, FAR);
+  ctx.lineTo(538, NEAR);
+  ctx.lineTo(-538, NEAR);
+  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = WOOD_L;
-  ctx.fillRect(-200, TOP, 400, 5);
-  ctx.fillStyle = WOOD_D;
-  ctx.fillRect(-200, TOP + 17, 400, 5);
-  limb(ctx, -152, TOP + 22, -144, -6, 14, WOOD_D);
-  limb(ctx, 152, TOP + 22, 144, -6, 14, WOOD_D);
 
-  /* bamboo steamers */
-  for (const i of [0, 1]) {
-    const y = TOP - 30 - i * 26;
-    ctx.fillStyle = i ? "#d7ab6a" : "#c99a5b";
-    rrect(ctx, -34 + i * 4, y, 118 - i * 8, 30 - i * 2, 6);
+  /* front edge and apron */
+  ctx.fillStyle = WOOD;
+  rrect(ctx, -538, NEAR, 1180, 16, 3);
+  ctx.fill();
+  ctx.fillStyle = WOOD_D;
+  rrect(ctx, -516, NEAR + 16, 1032, 38, 3);
+  ctx.fill();
+  rrect(ctx, -452, NEAR + 54, 20, 124, 5);
+  ctx.fill();
+  rrect(ctx, 432, NEAR + 54, 20, 124, 5);
+  ctx.fill();
+}
+
+function drawSetting(ctx, t) {
+  const S = -196; // where things stand on the surface
+
+  /* stacked steamers, centred between the guests */
+  for (const i of [0, 1, 2]) {
+    const y = S - 26 - i * 24;
+    ctx.fillStyle = i === 2 ? "#e0b876" : i ? "#d7ab6a" : "#c99a5b";
+    rrect(ctx, -66 + i * 3, y, 132 - i * 6, 26, 6);
     ctx.fill();
-    ctx.strokeStyle = "#ab7f3e";
+    ctx.strokeStyle = "rgba(171,127,62,0.55)";
     ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.moveTo(-28 + i * 4, y + 14);
-    ctx.lineTo(80 - i * 4, y + 14);
+    ctx.moveTo(-58 + i * 3, y + 12);
+    ctx.lineTo(58 - i * 3, y + 12);
     ctx.stroke();
   }
-  ctx.fillStyle = "#e0b876";
-  rrect(ctx, -32, TOP - 64, 114, 12, 5);
-  ctx.fill();
   ctx.fillStyle = "#ab7f3e";
-  circle(ctx, 25, TOP - 66, 6);
+  circle(ctx, 0, S - 76, 6);
   ctx.fill();
 
-  /* a plate of dumplings */
-  ctx.fillStyle = CELADON;
-  ctx.beginPath();
-  ctx.ellipse(-18, TOP - 4, 46, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-  for (const dx of [-36, -18, 0]) {
-    ctx.fillStyle = CREAM;
+  /* plates either side */
+  for (const px of [-348, 348]) {
+    ctx.fillStyle = "#cfd8c8";
     ctx.beginPath();
-    ctx.ellipse(dx, TOP - 11, 12, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(px, S - 4, 56, 13, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "#ddc9a6";
-    ctx.lineWidth = 1.6;
+    ctx.fillStyle = CELADON;
     ctx.beginPath();
-    ctx.moveTo(dx, TOP - 19);
-    ctx.lineTo(dx, TOP - 6);
-    ctx.stroke();
+    ctx.ellipse(px, S - 7, 56, 13, 0, 0, Math.PI * 2);
+    ctx.fill();
+    for (const dx of [-24, 0, 24]) {
+      ctx.fillStyle = CREAM;
+      ctx.beginPath();
+      ctx.ellipse(px + dx, S - 14, 13, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  /* red clay teapot */
+  /* red clay teapot, off to one side */
+  const tx = -448;
   ctx.fillStyle = RED_D;
-  circle(ctx, -120, TOP - 26, 28);
+  circle(ctx, tx, S - 28, 30);
   ctx.fill();
   ctx.fillStyle = RED;
   ctx.beginPath();
-  ctx.arc(-120, TOP - 26, 28, Math.PI * 1.15, Math.PI * 1.95);
+  ctx.arc(tx, S - 28, 30, Math.PI * 1.12, Math.PI * 1.98);
   ctx.closePath();
   ctx.fill();
   ctx.fillStyle = RED_D;
-  rrect(ctx, -129, TOP - 62, 19, 11, 4);
+  rrect(ctx, tx - 10, S - 66, 20, 12, 4);
   ctx.fill();
   ctx.strokeStyle = RED_D;
   ctx.lineWidth = 8;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(-145, TOP - 34);
-  ctx.quadraticCurveTo(-172, TOP - 30, -168, TOP - 8);
+  ctx.moveTo(tx - 28, S - 38);
+  ctx.quadraticCurveTo(tx - 58, S - 34, tx - 54, S - 10);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(-98, TOP - 38);
-  ctx.quadraticCurveTo(-75, TOP - 32, -96, TOP - 14);
+  ctx.moveTo(tx + 28, S - 38);
+  ctx.quadraticCurveTo(tx + 52, S - 32, tx + 30, S - 12);
   ctx.stroke();
 
   /* cups */
-  for (const cx of [120, -66]) {
+  for (const cx of [-268, 268, 420]) {
     ctx.fillStyle = CELADON;
-    rrect(ctx, cx - 15, TOP - 17, 30, 17, 5);
+    rrect(ctx, cx - 16, S - 20, 32, 20, 6);
     ctx.fill();
+    ctx.fillStyle = "#cfd8c8";
+    ctx.fillRect(cx - 16, S - 20, 32, 3);
   }
 
-  /* steam */
+  /* steam off the steamers */
   ctx.strokeStyle = "rgba(255,252,244,0.9)";
   ctx.lineWidth = 3.6;
   ctx.lineCap = "round";
   for (let i = 0; i < 3; i++) {
     const ph = t * 0.85 + i * 0.47;
     const rise = ph % 1;
-    const x0 = 2 + i * 32;
-    const y0 = TOP - 68;
-    ctx.globalAlpha = (1 - rise) * 0.5 * Math.min(1, rise * 5);
+    const x0 = -30 + i * 30;
+    const y0 = S - 84;
+    ctx.globalAlpha = (1 - rise) * 0.48 * Math.min(1, rise * 5);
     ctx.beginPath();
     ctx.moveTo(x0, y0);
-    for (let s = 0; s <= 1.001; s += 0.25) {
+    for (let sp = 0; sp <= 1.001; sp += 0.25) {
       ctx.lineTo(
-        x0 + Math.sin(s * 3.1 + ph * 4.2) * (9 + s * 13),
-        y0 - s * (86 + rise * 54),
+        x0 + Math.sin(sp * 3.1 + ph * 4.2) * (9 + sp * 13),
+        y0 - sp * (86 + rise * 54),
       );
     }
     ctx.stroke();
@@ -515,47 +625,60 @@ function latticePanel(ctx, x, y, w, h) {
 }
 
 /** A quiet neighbouring table, suggested rather than detailed. */
-function sideTable(ctx, x, flip, t, i) {
+function sideTable(ctx, x, t, i) {
   ctx.save();
   ctx.translate(x, 0);
-  ctx.scale(flip * 0.78, 0.78);
-  const TOP = -214;
-  ctx.fillStyle = WOOD;
-  rrect(ctx, -150, TOP, 300, 17, 6);
+  ctx.scale(0.62, 0.62);
+
+  /* bench */
+  ctx.fillStyle = BANQ_D;
+  rrect(ctx, -330, -288, 660, 158, 10);
   ctx.fill();
-  limb(ctx, -112, TOP + 17, -106, -6, 11, WOOD_D);
-  limb(ctx, 112, TOP + 17, 106, -6, 11, WOOD_D);
-  ctx.fillStyle = "#c99a5b";
-  rrect(ctx, -40, TOP - 26, 80, 26, 5);
+  ctx.fillStyle = WOOD_D;
+  rrect(ctx, -338, -306, 676, 22, 9);
   ctx.fill();
 
   const bob = Math.sin(t * 1.1 + i) * 3;
   for (const d of [-1, 1]) {
     ctx.save();
-    ctx.translate(d * 252, 0);
-    ctx.scale(d, 1);
-    ctx.fillStyle = WOOD_D;
-    rrect(ctx, -98, -266, 12, 150, 5);
-    ctx.fill();
-    ctx.fillStyle = WOOD;
-    rrect(ctx, -104, -140, 134, 13, 4);
-    ctx.fill();
-    ctx.fillStyle = INK_2;
-    limb(ctx, -6, -132, 62, -128, 32, INK_2);
-    limb(ctx, 62, -128, 56, -14, 27, INK_2);
-    ctx.beginPath();
-    ctx.moveTo(-40, -126);
-    ctx.quadraticCurveTo(-46, -230, -36, -282);
-    ctx.quadraticCurveTo(-22, -304, 2, -304);
-    ctx.quadraticCurveTo(28, -304, 38, -280);
-    ctx.quadraticCurveTo(48, -228, 44, -126);
-    ctx.closePath();
-    ctx.fill();
-    limb(ctx, 8, -288, 78, -230, 22, INK_2);
-    circle(ctx, 16, -348 + bob, 42);
-    ctx.fill();
+    ctx.translate(d * 150, 0);
+    drawFigure(ctx, {
+      side: d,
+      dark: true,
+      nod: bob,
+      breath: Math.sin(t * 1.6 + i + d) * 3,
+      bun: d < 0 && i === 0,
+      gesture: i === 1 && d > 0 ? 0.5 + 0.5 * Math.sin(t * 4) : 0,
+    });
     ctx.restore();
   }
+
+  ctx.fillStyle = WOOD;
+  ctx.beginPath();
+  ctx.moveTo(-300, -212);
+  ctx.lineTo(300, -212);
+  ctx.lineTo(326, -178);
+  ctx.lineTo(-326, -178);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = WOOD_D;
+  rrect(ctx, -312, -178, 624, 42, 3);
+  ctx.fill();
+
+  for (const d of [-1, 1]) {
+    ctx.save();
+    ctx.translate(d * 150, 0);
+    drawArms(ctx, {
+      side: d, dark: true,
+      gesture: i === 1 && d > 0 ? 0.5 + 0.5 * Math.sin(t * 4) : 0,
+      lift: i === 0 && d > 0 ? 0.5 + 0.5 * Math.sin(t * 2.3) : 0,
+    });
+    ctx.restore();
+  }
+
+  ctx.fillStyle = "#c99a5b";
+  rrect(ctx, -46, -238, 92, 28, 6);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -563,12 +686,11 @@ function drawInterior(ctx, t) {
   /* wall */
   ctx.fillStyle = WALL;
   ctx.fillRect(-1600, -1240, 3200, 1240);
-  const pool = ctx.createRadialGradient(0, -700, 60, 0, -620, 1150);
-  pool.addColorStop(0, "rgba(255,218,150,0.34)");
-  pool.addColorStop(1, "rgba(255,218,150,0)");
+  const pool = ctx.createRadialGradient(0, -620, 60, 0, -560, 1180);
+  pool.addColorStop(0, "rgba(255,221,158,0.32)");
+  pool.addColorStop(1, "rgba(255,221,158,0)");
   ctx.fillStyle = pool;
   ctx.fillRect(-1600, -1240, 3200, 1240);
-  /* skirting, well below the table */
   ctx.fillStyle = WALL_D;
   ctx.fillRect(-1600, -92, 3200, 92);
   ctx.fillStyle = WOOD_D;
@@ -589,7 +711,7 @@ function drawInterior(ctx, t) {
     ctx.stroke();
   }
   const refl = ctx.createLinearGradient(0, 0, 0, 230);
-  refl.addColorStop(0, "rgba(255,214,150,0.28)");
+  refl.addColorStop(0, "rgba(255,214,150,0.26)");
   refl.addColorStop(1, "rgba(255,214,150,0)");
   ctx.fillStyle = refl;
   ctx.fillRect(-900, 0, 1800, 230);
@@ -602,100 +724,130 @@ function drawInterior(ctx, t) {
   ctx.fillStyle = WOOD;
   ctx.fillRect(-1600, -1180, 3200, 8);
 
-  latticePanel(ctx, -1210, -930, 520, 700);
-  latticePanel(ctx, 690, -930, 520, 700);
+  latticePanel(ctx, -1330, -940, 480, 620);
+  latticePanel(ctx, 850, -940, 480, 620);
 
-  /* a single hanging scroll, centred */
+  /* hanging scroll, centred between the two heads and clear above
+     them — it must sit out of the opening frame or it crops */
   ctx.fillStyle = "#f3ecdc";
-  rrect(ctx, -72, -846, 144, 352, 3);
+  rrect(ctx, -66, -962, 132, 242, 3);
   ctx.fill();
   ctx.strokeStyle = WOOD_D;
   ctx.lineWidth = 8;
   ctx.beginPath();
-  ctx.moveTo(-82, -850);
-  ctx.lineTo(82, -850);
-  ctx.moveTo(-82, -490);
-  ctx.lineTo(82, -490);
+  ctx.moveTo(-77, -966);
+  ctx.lineTo(77, -966);
+  ctx.moveTo(-77, -720);
+  ctx.lineTo(77, -720);
   ctx.stroke();
   ctx.fillStyle = "#1e1710";
-  ctx.font = "126px KhangCn";
+  ctx.font = "104px KhangCn";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("康", 0, -706);
+  ctx.fillText("康", 0, -862);
   ctx.fillStyle = RED;
-  rrect(ctx, 16, -580, 32, 36, 4);
+  rrect(ctx, 15, -776, 27, 31, 4);
   ctx.fill();
 
-  sideTable(ctx, -1180, 1, t, 0);
-  sideTable(ctx, 1180, -1, t, 1);
+  lantern(ctx, -470, -716, 60, t, 0);
+  lantern(ctx, 470, -706, 60, t, 2);
+  lantern(ctx, -1010, -690, 52, t, 1);
+  lantern(ctx, 1010, -698, 52, t, 3);
 
-  lantern(ctx, -760, -706, 62, t, 0);
-  lantern(ctx, 760, -688, 62, t, 2);
-  lantern(ctx, 0, -746, 74, t, 1);
+  sideTable(ctx, -1030, t, 0);
+  sideTable(ctx, 1030, t, 1);
 
-  drawTable(ctx, t);
+  /* the banquette the pair are sitting on: deep green, picking up
+     the facade, and dark enough that the ink figures still read */
+  ctx.fillStyle = BANQ_D;
+  rrect(ctx, -676, -288, 1352, 166, 12);
+  ctx.fill();
+  const bq = ctx.createLinearGradient(0, -288, 0, -150);
+  bq.addColorStop(0, BANQ);
+  bq.addColorStop(1, BANQ_D);
+  ctx.fillStyle = bq;
+  rrect(ctx, -664, -280, 1328, 148, 10);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  ctx.lineWidth = 3;
+  for (const bx of [-332, 0, 332]) {
+    ctx.beginPath();
+    ctx.moveTo(bx, -274);
+    ctx.lineTo(bx, -140);
+    ctx.stroke();
+  }
+  ctx.fillStyle = WOOD_D;
+  rrect(ctx, -686, -306, 1372, 22, 10);
+  ctx.fill();
+  ctx.fillStyle = WOOD;
+  ctx.fillRect(-680, -306, 1360, 5);
 
   /* ── choreography ───────────────────────────────────────────
-     With no faces to act with, the talking has to live in the
-     hands and the head: the left guest gestures and tilts while
-     she speaks, the right guest lifts, bites, and nods as he
-     chews. Both read at a glance, which is the whole point of
-     working in pictograms. */
-  const talking = (t > 0.3 && t < 1.5) || (t > 2.5 && t < 3.6);
-  const talkIn = talking ? seg(t, t > 2.4 ? 2.5 : 0.3, t > 2.4 ? 2.75 : 0.55) : 0;
-  const talkOut = t > 1.5 && t < 1.8 ? 1 - seg(t, 1.5, 1.8) : 1;
-  const gestureL =
-    (talking ? talkIn * talkOut : 0) * (0.72 + 0.28 * Math.sin(t * 5.2));
-  const tiltL = talking
-    ? Math.sin(t * 5.4) * 0.05 + Math.sin(t * 1.9) * 0.025
-    : Math.sin(t * 1.9) * 0.025;
+     No faces, so every beat is pose: she leans in and her hand
+     moves with the sentence; he lifts, bites, and nods while he
+     chews. Both read at a glance, which is the point of working
+     in pictograms. */
+  const talking = (t > 0.3 && t < 1.5) || (t > 2.5 && t < 3.7);
+  const talkIn = talking ? seg(t, t > 2.4 ? 2.5 : 0.3, t > 2.4 ? 2.78 : 0.58) : 0;
+  const talkOut = t > 1.5 && t < 1.82 ? 1 - seg(t, 1.5, 1.82) : 1;
+  const amp = talking ? talkIn * talkOut : 0;
+  const gestureL = amp * (0.7 + 0.3 * Math.sin(t * 5.2));
+  const leanL = 0.055 + amp * 0.04 + Math.sin(t * 2.1) * 0.012;
 
   const liftStart = 1.3;
-  const atMouth = 1.92;
-  const biteEnd = 2.2;
-  const backDown = 2.84;
+  const atMouth = 1.94;
+  const biteEnd = 2.22;
+  const backDown = 2.9;
   let liftR = 0;
   if (t >= liftStart && t < atMouth) liftR = seg(t, liftStart, atMouth, easeInOut);
   else if (t >= atMouth && t < biteEnd) liftR = 1;
   else if (t >= biteEnd && t < backDown) liftR = 1 - seg(t, biteEnd, backDown, easeInOut);
 
-  /* the chew: a small, insistent nod, which is how a faceless head
-     tells you there is food in it */
-  const chewing = t > biteEnd && t < biteEnd + 1.7;
-  const nodR = chewing ? Math.sin((t - biteEnd) * 13.5) * 5.5 : Math.sin(t * 2.2) * 1.6;
+  /* chewing: a small insistent bob — on a faceless head it is the
+     only honest way to say there is food in it */
+  const chewing = t > biteEnd && t < biteEnd + 1.8;
+  const nodR = chewing ? Math.sin((t - biteEnd) * 13.5) * 5 : Math.sin(t * 2.2) * 1.6;
   const holdingR =
-    t < atMouth - 0.02
-      ? t > liftStart - 0.22
-        ? 1
-        : 0
+    t < atMouth - 0.02 ? (t > liftStart - 0.22 ? 1 : 0)
       : clamp01(1 - (t - (atMouth - 0.02)) / 0.16);
 
-  const breathe = (ph) => Math.sin(t * 1.7 + ph) * 3.2;
-
   ctx.save();
-  ctx.translate(-336, 0);
+  ctx.translate(-230, 0);
   drawFigure(ctx, {
-    dir: 1,
+    side: -1,
     bun: true,
     gesture: gestureL,
-    tilt: tiltL,
+    lean: leanL,
     nod: Math.sin(t * 2.4) * 1.6,
-    breath: breathe(0),
+    breath: Math.sin(t * 1.7) * 3.2,
   });
   ctx.restore();
 
   ctx.save();
-  ctx.translate(336, 0);
+  ctx.translate(230, 0);
   drawFigure(ctx, {
-    dir: -1,
+    side: 1,
     sticks: true,
     lift: liftR,
     nod: nodR,
-    tilt: Math.sin(t * 1.6 + 2) * 0.02 - liftR * 0.04,
-    breath: breathe(2.1),
+    lean: 0.04 + Math.sin(t * 1.6 + 2) * 0.014 - liftR * 0.03,
+    breath: Math.sin(t * 1.7 + 2.1) * 3.2,
     holding: holdingR,
   });
   ctx.restore();
+
+  drawTable(ctx, t);
+
+  ctx.save();
+  ctx.translate(-230, 0);
+  drawArms(ctx, { side: -1, gesture: gestureL });
+  ctx.restore();
+  ctx.save();
+  ctx.translate(230, 0);
+  drawArms(ctx, { side: 1, sticks: true, lift: liftR, holding: holdingR });
+  ctx.restore();
+
+  drawSetting(ctx, t);
 }
 
 /* ── The shopfront ───────────────────────────────────────────── */
@@ -806,9 +958,9 @@ function drawGlazingFrame(ctx, alpha) {
   ctx.fillStyle = BUILD_L;
   ctx.fillRect(dx + bw / 2 - 6, y + 30, 12, h - 30);
   ctx.fillStyle = "#e8cc96";
-  rrect(ctx, dx + bw / 2 - 22, y + 196, 7, 76, 3.5);
+  rrect(ctx, dx + bw / 2 - 24, y + 212, 7, 62, 3.5);
   ctx.fill();
-  rrect(ctx, dx + bw / 2 + 15, y + 196, 7, 76, 3.5);
+  rrect(ctx, dx + bw / 2 + 17, y + 212, 7, 62, 3.5);
   ctx.fill();
 
   ctx.fillStyle = BUILD_L;
@@ -927,13 +1079,13 @@ function camera(t) {
     scale = lerp(1.0, 1.045, drift);
     cy = lerp(540, 528, drift);
   } else if (pull > 0) {
-    scale = expLerp(4.0, 1.0, pull);
-    cy = lerp(745, 540, pull);
+    scale = expLerp(5.1, 1.0, pull);
+    cy = lerp(741, 540, pull);
   } else {
     // Kept wholly inside the glazing, or the shopfront's plinth creeps
     // into the bottom of what should read as a shot from inside.
-    scale = expLerp(4.3, 4.0, hold);
-    cy = lerp(751, 745, hold);
+    scale = expLerp(5.5, 5.1, hold);
+    cy = lerp(746, 741, hold);
   }
   return { scale, cx: 960 + Math.sin(t * 0.42) * 2.0, cy };
 }
@@ -979,7 +1131,7 @@ function renderFrame(ctx, t, frame) {
   drawInterior(ctx, t);
   ctx.restore();
 
-  drawGlazingFrame(ctx, clamp01((3.6 - cam.scale) / 1.3));
+  drawGlazingFrame(ctx, clamp01((3.9 - cam.scale) / 1.4));
   ctx.restore();
 
   /* grade */

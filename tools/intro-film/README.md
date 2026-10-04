@@ -12,11 +12,29 @@ the picture washes to white and the brand lockup resolves on its own
 card: the green roundel carrying 康, then KHANG, a jade hairline and
 CHINESE · DIMSUM, the same mark the site wears in its header.
 
-The guests are **pictograms** — a circle for the head held clear of
-the shoulders, a tapered body, round-capped limbs, no face at all.
-That is a deliberate constraint, not a shortcut: with no features to
-act with, every beat has to be carried by pose, which is why the
-talker gestures and the eater nods while he chews.
+The guests are **pictograms**, built to the same construction as the
+reference they came from:
+
+  · a circle for the head, held clear of the body by a gap
+  · a yoke whose shoulder line slopes steeply down and out
+  · arms hung off the shoulder points, so a thin wedge of background
+    separates each arm from the torso
+  · long tapered limbs ending in plain round caps, no hands, no face
+
+They are seen **front-on**, and that is not a style choice. The
+sloping shoulder is the whole character of the figure and it only
+exists front-on — drawn in profile it vanishes and you are left with
+a blob. Hence the banquette: it seats both guests square to camera,
+side by side as in the reference, and hides the legs behind the table
+where a seated pictogram gets ugly.
+
+Realism is carried by modelling, not by detail. The head is shaded as
+a sphere rather than filled as a disc, the body takes a top-lit
+gradient, and both drop contact shadows onto the bench. The geometry
+stays a pictogram; only the rendering gains dimension. With no
+features to act with, every beat has to be pose — which is why the
+talker's hand rises with her sentence and the eater nods while he
+chews.
 
 The end card is **white and empty of the restaurant**. A mark fighting
 a lit shopfront for attention loses; given its own ground it reads in
@@ -84,14 +102,26 @@ the end, and the retreat between them is a single continuous zoom.
   shopfront's plinth creeps into the bottom of what should read as a
   shot from inside the room. The glazing bars themselves fade up as the
   camera backs out through them.
-- Figures are drawn facing right and mirrored as a whole with
-  `scale(dir, 1)`, so body, limbs and hair-bun flip as one piece. The
-  left guest keeps a bun: it is the only asymmetry on the head, and
-  without it a head tilt on a plain circle is invisible.
+- Figures are mirrored as a whole with `scale(side, 1)`, so the acting
+  arm can always be authored at local −x and still end up facing the
+  companion. The left guest keeps a bun: it is the only asymmetry on
+  the head, and without it a head tilt on a plain circle is invisible.
+- **The arms are a second pass.** `drawFigure` lays down the body and
+  head, the table goes over them, then `drawArms` runs again on top —
+  otherwise the hands are drawn behind the table and the whole
+  silhouette, wedge gap included, disappears under a plank of oak.
+- The table sits at navel height for the same reason. Any higher and
+  it eats the armpit, which is where the gap that defines the figure
+  begins.
 - The acting arm blends **two** target poses off one rest pose — a
   mouth pose and a gesture pose — so the same two-segment limb either
   feeds its owner or talks for them. The other arm stays on the table,
   which stops the torso ending in mid-air.
+- Watch what lines up *through* the glass. The brass door handles on
+  the facade sat directly under the wall scroll inside, and read as
+  two rods hanging off it; the scroll had to move up the wall. Two
+  elements at different depths can be individually correct and still
+  compose into one wrong object.
 - The chopstick angle is solved so that at the mouth pose the *tip*
   lands exactly on the rim of the head circle and the hand sits in
   front of and below it. Run the sticks the other way and they are
