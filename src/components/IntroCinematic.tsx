@@ -1,25 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * ─────────────────────────────────────────────────────────────
  *  Khang entrance film
  * ─────────────────────────────────────────────────────────────
  *
- *  Opens on a guest enjoying her meal, then retreats out of the
- *  restaurant and finishes on the name above the door:
+ *  A nine second film, authored frame by frame in tools/intro-film
+ *  and encoded to public/intro/khang-entrance.mp4 (+ .webm):
  *
- *    0.0s  she is mid-conversation at her table
- *    0.8s  she lifts a dumpling and takes a bite
- *    1.6s  she settles back, enjoying it
- *    2.5s  the camera pulls back down the dining room
- *    3.7s  past the threshold, daylight through the open doors
- *    4.9s  out to the whole facade at dusk
- *    5.65s the signboard lights and 康 / KHANG resolves on it
- *    7.2s  the film fades and the site settles into place
+ *    0.0s  two guests at a table, close; one of them is talking
+ *    1.5s  the other lifts a dumpling with her chopsticks
+ *    2.1s  she takes the bite, and goes on chewing
+ *    3.0s  the camera begins to retreat, out through the window
+ *    5.5s  the dining room, its lanterns and screens, come into view
+ *    7.0s  the whole shopfront is in frame
+ *    7.3s  the board lights and 康 / KHANG resolves on it
+ *    8.7s  the film hands the page over to the site
  *
- *  The three opening beats are layers of ONE shot, so they share a
- *  single unbroken camera move: cross-fading them reads as the guest
- *  moving rather than as three separate frames being swapped.
+ *  It is one continuous camera move and one continuous performance
+ *  — the picture is video, not a slideshow, so this component is
+ *  deliberately thin: play it, follow it, and get out of the way.
  *
  *  Skippable throughout; `prefers-reduced-motion` never mounts it.
  */
@@ -37,108 +37,20 @@ interface Props {
 const PLAY_ONCE_PER_SESSION = false;
 const SESSION_KEY = "khang_intro_played";
 
-/* ─── The shot list ───────────────────────────────────────────
-   Every shot is framed wider than the last and still easing
-   outwards as the next dissolves over it, which is what sells the
-   retreat as one continuous move rather than six stills. */
-interface Layer {
-  src: string;
-  /** When this layer dissolves in (ms from the start of the film). */
-  at: number;
-  alt: string;
-  /** Overrides the standard dissolve. The guest's poses use a shorter
-   *  one: at the full length the overlap ghosts her arm into two
-   *  places at once instead of reading as a single movement. */
-  fade?: number;
-}
+const FILM_MP4 = "/intro/khang-entrance.mp4";
+const FILM_WEBM = "/intro/khang-entrance.webm";
+const FILM_POSTER = "/intro/poster.jpg";
 
-interface Shot {
-  id: string;
-  /** Scale at the start and end of this shot's own drift. */
-  from: number;
-  to: number;
-  /** Always outlives the shot's time on screen, so it never sits still. */
-  duration: number;
-  /** Stacked frames sharing this shot's camera move. */
-  layers: Layer[];
-}
+/** Length of the film, and the moment the hand-over begins. The exit
+ *  overlaps the last held beat on the sign, so the site arrives while
+ *  the logo is still up rather than after a dead pause. */
+const FILM_MS = 9000;
+const EXIT_AT = 8650;
+const EXIT_MS = 900;
 
-const SHOTS: Shot[] = [
-  {
-    id: "guest",
-    from: 1.26,
-    to: 1.06,
-    duration: 3300,
-    layers: [
-      {
-        src: "/intro/01-speaking.jpg",
-        fade: 500,
-        at: 0,
-        alt: "A guest talking over a table of dim sum",
-      },
-      {
-        src: "/intro/02-bite.jpg",
-        fade: 500,
-        at: 800,
-        alt: "The guest lifting a dumpling with chopsticks",
-      },
-      {
-        src: "/intro/03-enjoy.jpg",
-        fade: 500,
-        at: 1600,
-        alt: "The guest enjoying her food",
-      },
-    ],
-  },
-  {
-    id: "room",
-    from: 1.16,
-    to: 1.03,
-    duration: 2700,
-    layers: [
-      {
-        src: "/intro/04-room.jpg",
-        at: 2500,
-        alt: "The dining room and its row of lanterns",
-      },
-    ],
-  },
-  {
-    id: "threshold",
-    from: 1.13,
-    to: 1.02,
-    duration: 2600,
-    layers: [
-      {
-        src: "/intro/05-threshold.jpg",
-        at: 3700,
-        alt: "Daylight through the restaurant's open doors",
-      },
-    ],
-  },
-  {
-    id: "facade",
-    from: 1.12,
-    to: 1.0,
-    duration: 3600,
-    layers: [
-      {
-        src: "/intro/06-facade.jpg",
-        at: 4900,
-        alt: "The restaurant entrance at dusk",
-      },
-    ],
-  },
-];
-
-const FADE = 700; // cross-dissolve length, ms
-const SIGN_AT = 5650; // the board lights up
-const EXIT_AT = 7200; // the film starts handing over to the site
-const EXIT_MS = 900; // and how long that takes
-
-/** The opening frame must be decoded before we start; the rest can arrive late. */
-const FIRST_FRAME_TIMEOUT = 2600;
-const FIRST_FRAME = SHOTS[0].layers[0].src;
+/** If the first frame cannot be decoded and playing by now, the film
+ *  stands aside: a blank hold is far worse than no intro at all. */
+const START_TIMEOUT = 3000;
 
 function prefersReducedMotion(): boolean {
   return (
@@ -158,23 +70,15 @@ export function shouldSkipIntro(): boolean {
   }
 }
 
-/** Resolves when the image is in cache, or rejects — never hangs. */
-function preload(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error(`could not load ${src}`));
-    img.src = src;
-  });
-}
-
 export default function IntroCinematic({ onPhaseChange }: Props) {
   // Decided before first paint, so the film never flashes in and out.
   const [phase, setPhase] = useState<IntroPhase>(() =>
     shouldSkipIntro() ? "done" : "playing",
   );
-  // Nothing animates until the opening frame is actually on the wire.
+  // True once the video is actually running, not merely mounted.
   const [rolling, setRolling] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   /**
    * Each phase owns exactly one timer, scheduled by its own effect.
@@ -209,39 +113,85 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
     };
   }, [phase]);
 
-  // Wait for the opening frame, then roll. If it cannot be fetched the
-  // film steps aside entirely rather than gating the site behind it.
+  /* Start playback ourselves rather than trusting the autoplay
+     attribute alone: muted inline autoplay is allowed everywhere we
+     care about, but if a browser or an extension does refuse it, the
+     rejection is our cue to release the site immediately instead of
+     leaving the poster frozen over the page. */
   useEffect(() => {
     if (phase !== "playing") return;
-    let cancelled = false;
+    const video = videoRef.current;
+    if (!video) return;
+    let settled = false;
+    let poll = 0;
 
-    const timeout = new Promise<void>((_, reject) =>
-      window.setTimeout(
-        () => reject(new Error("first frame timed out")),
-        FIRST_FRAME_TIMEOUT,
-      ),
-    );
+    const give = () => {
+      if (settled) return;
+      settled = true;
+      window.clearInterval(poll);
+      setPhase("done");
+    };
 
-    Promise.race([preload(FIRST_FRAME), timeout])
-      .then(() => {
-        if (!cancelled) setRolling(true);
-      })
-      .catch(() => {
-        if (!cancelled) setPhase("done");
-      });
+    const started = () => {
+      if (settled) return;
+      settled = true;
+      window.clearInterval(poll);
+      setRolling(true);
+    };
 
-    // The rest stream in behind it; each frame only has to be there by
-    // the time it dissolves in, so failures here are harmless.
-    SHOTS.flatMap((shot) => shot.layers)
-      .filter((layer) => layer.src !== FIRST_FRAME)
-      .forEach((layer) => void preload(layer.src).catch(() => {}));
+    video.muted = true; // iOS only honours autoplay on a muted element
+    const attempt = video.play();
+    if (attempt && typeof attempt.catch === "function") attempt.catch(give);
+
+    video.addEventListener("playing", started, { once: true });
+    video.addEventListener("error", give, { once: true });
+
+    /* When a <video> is fed by <source> children and they all fail, the
+       error fires on the last <source>, never on the element itself —
+       so the media element alone would leave us waiting. networkState
+       settling on NO_SOURCE is the reliable signal that there is
+       nothing to play, and it arrives in a few hundred milliseconds
+       rather than at the end of the watchdog. */
+    poll = window.setInterval(() => {
+      if (video.networkState === video.NETWORK_NO_SOURCE) give();
+    }, 150);
+
+    const watchdog = window.setTimeout(() => {
+      // Playing by now, just without a "playing" event we caught?
+      if (!video.paused && video.currentTime > 0) started();
+      else give();
+    }, START_TIMEOUT);
 
     return () => {
-      cancelled = true;
+      window.clearTimeout(watchdog);
+      window.clearInterval(poll);
+      video.removeEventListener("playing", started);
+      video.removeEventListener("error", give);
     };
   }, [phase]);
 
-  // Roll out at the end of the film.
+  // Follow the picture: the hairline tracks the film's own clock.
+  useEffect(() => {
+    if (!rolling || phase !== "playing") return;
+    const video = videoRef.current;
+    if (!video) return;
+    const onTime = () => {
+      const length = Number.isFinite(video.duration) && video.duration > 0
+        ? video.duration
+        : FILM_MS / 1000;
+      setProgress(Math.min(1, video.currentTime / length));
+    };
+    video.addEventListener("timeupdate", onTime);
+    video.addEventListener("ended", finish);
+    return () => {
+      video.removeEventListener("timeupdate", onTime);
+      video.removeEventListener("ended", finish);
+    };
+  }, [rolling, phase, finish]);
+
+  // Roll out at the end of the film. Measured from the moment it
+  // actually started, and backed up by `ended` above in case playback
+  // stalls and runs long.
   useEffect(() => {
     if (!rolling || phase !== "playing") return;
     const id = window.setTimeout(finish, EXIT_AT);
@@ -268,19 +218,8 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [phase, finish]);
 
-  const exiting = phase === "exiting";
-
-  /** Animations stay paused until the opening frame is ready. */
-  const cue = useMemo(
-    () =>
-      (delay: number, extra: React.CSSProperties = {}): React.CSSProperties =>
-        rolling
-          ? { animationDelay: `${delay}ms`, ...extra }
-          : { animationPlayState: "paused", opacity: 0, ...extra },
-    [rolling],
-  );
-
   if (phase === "done") return null;
+  const exiting = phase === "exiting";
 
   return (
     <div
@@ -294,67 +233,25 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
       onClick={exiting ? undefined : finish}
     >
       <div className="intro-film absolute inset-0 overflow-hidden">
-        {SHOTS.map((shot) => (
-          <div
-            key={shot.id}
-            className="intro-frame intro-shot"
-            style={cue(shot.layers[0].at, {
-              ["--from" as string]: shot.from,
-              ["--to" as string]: shot.to,
-              ["--dur" as string]: `${shot.duration}ms`,
-            })}
-          >
-            {/* Layers share this shot's camera move, so cross-fading
-                them reads as movement inside a single take. */}
-            {shot.layers.map((layer) => (
-              <img
-                key={layer.src}
-                src={layer.src}
-                alt={layer.alt}
-                className="intro-plate intro-dissolve"
-                draggable={false}
-                fetchPriority={layer.src === FIRST_FRAME ? "high" : "low"}
-                decoding="async"
-                style={cue(layer.at, {
-                  ["--fade" as string]: `${layer.fade ?? FADE}ms`,
-                })}
-              />
-            ))}
+        <video
+          ref={videoRef}
+          className="intro-plate"
+          // The attributes matter as much as the play() call: Safari
+          // decides whether a video may autoplay from the markup.
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          poster={FILM_POSTER}
+          disablePictureInPicture
+          disableRemotePlayback
+          tabIndex={-1}
+        >
+          <source src={FILM_WEBM} type="video/webm" />
+          <source src={FILM_MP4} type="video/mp4" />
+        </video>
 
-            {/* The sign is parented to the facade plate, so it stays
-                welded to the board however the window is shaped. */}
-            {shot.id === "facade" && (
-              <>
-                <span className="intro-sign-glow" style={cue(SIGN_AT)} />
-                <span className="intro-sign">
-                  <span className="intro-mark font-cn" style={cue(SIGN_AT)}>
-                    康
-                  </span>
-                  <span
-                    className="intro-name font-display"
-                    style={cue(SIGN_AT + 220)}
-                  >
-                    KHANG
-                  </span>
-                  <span
-                    className="intro-sign-rule"
-                    style={cue(SIGN_AT + 440)}
-                  />
-                  <span
-                    className="intro-sign-sub font-mono"
-                    style={cue(SIGN_AT + 540, {
-                      ["--fade" as string]: "700ms",
-                    })}
-                  >
-                    Chinese · Dimsum
-                  </span>
-                </span>
-              </>
-            )}
-          </div>
-        ))}
-
-        {/* Grade + grain, tying the plates into one piece of film */}
+        {/* Grade + grain, so the flat vector picture reads as film */}
         <div className="intro-grade pointer-events-none absolute inset-0" />
         <div className="intro-grain pointer-events-none" />
       </div>
@@ -370,11 +267,7 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
       >
         <div
           className="intro-progress h-full bg-gradient-to-r from-amber-200/40 via-amber-100/70 to-white/90"
-          style={
-            rolling
-              ? { animationDuration: `${EXIT_AT}ms` }
-              : { animationPlayState: "paused", transform: "scaleX(0)" }
-          }
+          style={{ transform: `scaleX(${progress})` }}
         />
       </div>
 

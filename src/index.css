@@ -420,48 +420,26 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   ENTRANCE INTRO — cinematic pull-back
+   ENTRANCE INTRO — the Khang entrance film
    Used by src/components/IntroCinematic.tsx
 
-   A five-shot dolly-back through the restaurant: a dressed table,
-   the banquette, the dining room, the threshold, and finally the
-   whole facade, where the logo lights up on the signboard.
+   The film is a real 1600 × 900 video (public/intro/khang-entrance
+   .mp4 / .webm), authored frame by frame by tools/intro-film. It
+   opens close on two guests at a table — one talking, the other
+   lifting a dumpling and eating it — then pulls back in one
+   unbroken move out through the window to the whole shopfront,
+   where the board lights and 康 / KHANG resolves on it.
 
-   Every shot is a full-bleed still inside `.intro-frame`, a box
-   sized to cover the viewport while keeping the plate's aspect
-   ratio. Because the frame's geometry is known, anything parented
-   to it (i.e. the sign) can be positioned in percentages of the
-   plate and will stay welded to the building at any window size.
+   The camera move, the performance and the sign are all baked into
+   the video, so nothing here animates the picture: this stylesheet
+   only has to make the video cover the viewport and dress the film
+   with bars, grade, grain and the hand-over to the site.
    ══════════════════════════════════════════════════════════════ */
 
-:root {
-  /* Aspect ratio of the rendered plates (1584 × 672). */
-  --plate-ar: 2.357142857;
-}
-
-/* A cover-sized box: exactly what object-fit: cover computes, but as a
-   real element, so children inherit the plate's coordinate space.
-   The ratio plus both minimums is what produces the cover behaviour;
-   sizing off the parent rather than vw/vh matters because 100vh does
-   not match the visible viewport on mobile and would leave a sliver
-   of background showing along the bottom edge.
-   `container-type: size` then lets the sign scale itself in cqw — 1%
-   of the plate's width — so the lettering always fits the board. */
-.intro-frame {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  aspect-ratio: var(--plate-ar);
-  min-width: 100%;
-  min-height: 100%;
-  container-type: size;
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-}
-
-/* Plates stack inside their shot so several frames of the same take
-   can cross-fade over one shared camera move. */
+/* The video fills the viewport, cropping rather than letterboxing.
+   Everything that matters — the table, the doorway, the signboard —
+   is composed inside the middle 40% of the frame, so even a narrow
+   portrait crop keeps the whole story on screen. */
 .intro-plate {
   position: absolute;
   inset: 0;
@@ -469,120 +447,7 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-/* Each shot drifts from a tighter framing to a wider one; played
-   back to back they read as one continuous retreat of the camera. */
-@keyframes intro-dolly {
-  from { transform: scale(var(--from)); }
-  to   { transform: scale(var(--to)); }
-}
-.intro-shot {
-  animation: intro-dolly var(--dur) cubic-bezier(0.33, 0, 0.3, 1) both;
-}
-
-/* Shots cross-dissolve rather than cut. */
-@keyframes intro-dissolve-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.intro-dissolve {
-  animation: intro-dissolve-in var(--fade) ease-out both;
-}
-
-/* ── The sign ─────────────────────────────────────────────────
-   Positioned over the blank board above the doors. Sizes are
-   percentages of the plate, so it tracks the building exactly. */
-.intro-sign {
-  position: absolute;
-  left: 50%;
-  top: 27.2%;
-  width: 34%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  line-height: 1;
-}
-
-/* The board lights up, as if the sign's lamps were switched on. */
-@keyframes intro-sign-lamp {
-  0%   { opacity: 0; }
-  100% { opacity: 1; }
-}
-.intro-sign-glow {
-  position: absolute;
-  left: 50%;
-  top: 27.2%;
-  width: 46%;
-  height: 24%;
-  transform: translate(-50%, -50%);
-  border-radius: 999px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 226, 170, 0.26) 0%,
-    rgba(255, 210, 140, 0.1) 45%,
-    transparent 72%
-  );
-  animation: intro-sign-lamp 1.1s ease-out both;
-}
-
-/* 康 settles onto the board, then the name resolves beneath it. */
-@keyframes intro-mark-in {
-  0%   { opacity: 0; transform: translateY(14%) scale(0.9); filter: blur(6px); }
-  100% { opacity: 1; transform: translateY(0) scale(1);     filter: blur(0); }
-}
-.intro-mark {
-  display: block;
-  margin: 0 auto;
-  font-size: 2.55cqw;
-  color: #fdfaf3;
-  text-shadow: 0 0 1.2cqw rgba(255, 216, 150, 0.55);
-  animation: intro-mark-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes intro-name-in {
-  0%   { opacity: 0; transform: translateY(45%); letter-spacing: 0.1em; }
-  100% { opacity: 1; transform: translateY(0);   letter-spacing: 0.34em; }
-}
-.intro-name {
-  display: block;
-  margin-top: 0.6cqw;
-  font-size: 1.45cqw;
-  font-weight: 500;
-  letter-spacing: 0.34em;
-  text-indent: 0.34em;
-  color: #fdfaf3;
-  text-shadow: 0 0 1cqw rgba(255, 216, 150, 0.4);
-  animation: intro-name-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* Hairline rule + descriptor under the name. */
-@keyframes intro-rule-in {
-  from { transform: scaleX(0); opacity: 0; }
-  to   { transform: scaleX(1); opacity: 1; }
-}
-.intro-sign-rule {
-  display: block;
-  height: 1px;
-  margin: 0.75cqw auto 0;
-  width: 58%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(253, 250, 243, 0.65),
-    transparent
-  );
-  animation: intro-rule-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.intro-sign-sub {
-  display: block;
-  margin-top: 0.5cqw;
-  font-size: 0.53cqw;
-  font-weight: 600;
-  letter-spacing: 0.44em;
-  text-indent: 0.44em;
-  text-transform: uppercase;
-  color: rgba(253, 250, 243, 0.78);
-  animation: intro-dissolve-in 0.7s ease-out both;
+  background: #0a0a0a;
 }
 
 /* ── Furniture of the film ────────────────────────────────────── */
@@ -601,15 +466,15 @@ body {
 .is-opening .intro-bar-top    { transform: translateY(-100%); }
 .is-opening .intro-bar-bottom { transform: translateY(100%); }
 
-/* Warmth + falloff so the plates sit together as one grade. */
+/* Warmth + falloff, so the picture sits in the page as one grade. */
 .intro-grade {
   background:
-    radial-gradient(ellipse at 50% 45%, transparent 42%, rgba(10, 10, 10, 0.5) 100%),
-    linear-gradient(0deg, rgba(60, 35, 12, 0.1), rgba(60, 35, 12, 0.1));
+    radial-gradient(ellipse at 50% 45%, transparent 46%, rgba(10, 10, 10, 0.46) 100%),
+    linear-gradient(0deg, rgba(60, 35, 12, 0.08), rgba(60, 35, 12, 0.08));
   mix-blend-mode: multiply;
 }
 
-/* Fine grain, so the stills read as one piece of film. */
+/* Fine grain over the top, so flat vector shapes read as film. */
 @keyframes intro-grain {
   0%, 100% { transform: translate(0, 0); }
   20%  { transform: translate(-1.5%, 1%); }
@@ -620,19 +485,17 @@ body {
 .intro-grain {
   position: absolute;
   inset: -6%;
-  opacity: 0.05;
+  opacity: 0.045;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   animation: intro-grain 0.6s steps(1) infinite;
 }
 
-/* Progress hairline along the foot of the frame. */
-@keyframes intro-progress {
-  from { transform: scaleX(0); }
-  to   { transform: scaleX(1); }
-}
+/* Progress hairline along the foot of the frame. Driven by the
+   video's own currentTime rather than a CSS duration, so it can
+   never drift away from the picture if playback stalls. */
 .intro-progress {
   transform-origin: left;
-  animation: intro-progress linear both;
+  transition: transform 0.2s linear;
 }
 
 /* The film itself fades as the site takes over. */
@@ -659,19 +522,12 @@ body {
 
 /* Anyone who asked for less motion gets none of it ------------- */
 @media (prefers-reduced-motion: reduce) {
-  .intro-shot,
-  .intro-dissolve,
-  .intro-mark,
-  .intro-name,
-  .intro-sign-rule,
-  .intro-sign-sub,
-  .intro-sign-glow,
-  .intro-progress,
   .intro-grain {
     animation: none !important;
   }
   .intro-bar,
   .intro-film,
+  .intro-progress,
   .intro-stage {
     transition: none !important;
   }
