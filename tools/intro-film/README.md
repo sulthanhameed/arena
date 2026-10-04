@@ -3,17 +3,29 @@
 `render.cjs` draws every frame of the intro video that plays over the
 homepage — ten seconds, 1920 × 1080, 30 fps, 300 frames.
 
-It opens close on two guests at a table. One of them is talking; the
-other lifts a dumpling with her chopsticks, eats it, and goes on
-chewing. From three seconds the camera retreats in one unbroken move,
-back through the window, past the lanterns and screens of the dining
-room, until the whole shopfront is in frame — and the board above the
-doors lights up with the brand lockup: the green roundel carrying 康,
-then KHANG, a jade hairline and CHINESE · DIMSUM, the same mark the
-site wears in its header.
+It opens close on two guests at a table. One is talking, hand moving
+with the sentence; the other lifts a dumpling with his chopsticks,
+eats it, and goes on chewing. From 2.8 s the camera retreats in one
+unbroken move, back through the window, past the lanterns and screens
+of the dining room, until the whole shopfront stands in frame. Then
+the picture washes to white and the brand lockup resolves on its own
+card: the green roundel carrying 康, then KHANG, a jade hairline and
+CHINESE · DIMSUM, the same mark the site wears in its header.
 
-Everything is drawn: the performance, the camera move and the sign are
-all baked into the video, so the site only has to play it.
+The guests are **pictograms** — a circle for the head held clear of
+the shoulders, a tapered body, round-capped limbs, no face at all.
+That is a deliberate constraint, not a shortcut: with no features to
+act with, every beat has to be carried by pose, which is why the
+talker gestures and the eater nods while he chews.
+
+The end card is **white and empty of the restaurant**. A mark fighting
+a lit shopfront for attention loses; given its own ground it reads in
+a single glance, and because the site behind the overlay is also
+white, the film hands over without a visible seam.
+
+Everything is drawn: the performance, the camera move and both the
+shopfront sign and the end card are baked into the video, so the site
+only has to play it.
 
 ## Running it
 
@@ -72,25 +84,35 @@ the end, and the retreat between them is a single continuous zoom.
   shopfront's plinth creeps into the bottom of what should read as a
   shot from inside the room. The glazing bars themselves fade up as the
   camera backs out through them.
-- **A head is one path, not two.** The jaw is rigged by rotating its
-  control points about a hinge below the ear *before* the outline is
-  built, so the face stays a single silhouette: no seam along the
-  mouth line and no tonal step where a separately-filled jaw would
-  give the rig away. The open mouth is then cut back in as a wedge
-  between the two lip lines, which is what makes talking and chewing
-  unmistakable at any size.
-- Faces are drawn facing right and mirrored with `scale(dir, 1)`, so
-  the eye, brow, ear, nose and hair all flip as one piece.
-- Arms are round-capped strokes interpolated between a rest pose and a
-  mouth pose; the chopsticks rotate with them, and the mouth pose is
-  solved so the chopstick *tip* lands on the lips rather than spearing
-  through the cheek. The far arm is drawn *behind* the torso — over
-  it, the upper arm reads as a strap across the chest.
+- Figures are drawn facing right and mirrored as a whole with
+  `scale(dir, 1)`, so body, limbs and hair-bun flip as one piece. The
+  left guest keeps a bun: it is the only asymmetry on the head, and
+  without it a head tilt on a plain circle is invisible.
+- The acting arm blends **two** target poses off one rest pose — a
+  mouth pose and a gesture pose — so the same two-segment limb either
+  feeds its owner or talks for them. The other arm stays on the table,
+  which stops the torso ending in mid-air.
+- The chopstick angle is solved so that at the mouth pose the *tip*
+  lands exactly on the rim of the head circle and the hand sits in
+  front of and below it. Run the sticks the other way and they are
+  drawn straight across the face. They are also a darker wood than the
+  dumpling, or the two merge into one pale bar against the ink.
+- Chewing is a ±5 px head bob at ~13 rad/s. On a faceless head that is
+  the only honest way to say there is food in it.
+- `roundel()` is the single definition of the mark, called at r = 46
+  on the shopfront board and r = 92 on the end card. One definition,
+  two sizes — the alternative is two drawings that drift apart.
 - `tracked()` draws letter-spaced text a character at a time, because
   canvas `letterSpacing` is unreliable across implementations, and the
   per-character alpha is what lets KHANG resolve one letter at a time.
-- The closing push is deliberately tiny — scale 1.0 to 1.12. Anything
-  more and the complete entrance, which the sign belongs to, starts
-  falling out of frame.
+- The shopfront sign is lit from the moment it is visible. A sign that
+  switches on at the end of the move makes the restaurant look shut
+  for the first six seconds.
+- The closing drift is deliberately tiny — scale 1.0 to 1.045. Anything
+  more and the complete entrance starts falling out of frame.
+- The end card is drawn **after** the world transform is restored, in
+  screen space, so it is unaffected by the camera and stays inside the
+  central 40 % of the frame — which is what survives `object-fit:
+  cover` on a portrait phone.
 - Watch the glyph coverage: 囍 is not in Ma Shan Zheng and rendered as
   nothing at all. The wall scroll uses 康, which is.
