@@ -12,29 +12,28 @@ the picture washes to white and the brand lockup resolves on its own
 card: the green roundel carrying 康, then KHANG, a jade hairline and
 CHINESE · DIMSUM, the same mark the site wears in its header.
 
-The guests are **pictograms**, built to the same construction as the
-reference they came from:
+The guests are **drawn as people** on the reference pictogram's
+proportions: the same square front-on stance, the same broad
+trapezius sloping out to a wide shoulder cap — but with skin, hair,
+cloth and a working face.
 
-  · a circle for the head, held clear of the body by a gap
-  · a yoke whose shoulder line slopes steeply down and out
-  · arms hung off the shoulder points, so a thin wedge of background
-    separates each arm from the torso
-  · long tapered limbs ending in plain round caps, no hands, no face
+They face camera, and that is not a style choice. The sloping
+shoulder is the whole character of the figure and it only exists
+front-on; drawn in profile it flattens out. Hence the banquette,
+which seats both guests square to camera side by side, and hides the
+legs behind the table where a seated figure gets ugly.
 
-They are seen **front-on**, and that is not a style choice. The
-sloping shoulder is the whole character of the figure and it only
-exists front-on — drawn in profile it vanishes and you are left with
-a blob. Hence the banquette: it seats both guests square to camera,
-side by side as in the reference, and hides the legs behind the table
-where a seated pictogram gets ugly.
+**Form is carried by gradient, never by outline.** There is not a
+single black contour anywhere on these two; every edge is a tonal
+step. That is the whole difference between a figure that reads as
+drawn and one that reads as clip-art.
 
-Realism is carried by modelling, not by detail. The head is shaded as
-a sphere rather than filled as a disc, the body takes a top-lit
-gradient, and both drop contact shadows onto the bench. The geometry
-stays a pictogram; only the rendering gains dimension. With no
-features to act with, every beat has to be pose — which is why the
-talker's hand rises with her sentence and the eater nods while he
-chews.
+Because they have mouths, speech is now shown rather than implied —
+the jaw opens on two overlaid rates so it never ticks like a
+metronome, and the hand only has to support the sentence instead of
+carrying it alone. The eater's chew drives the same mouth at a
+slower rate plus a small head bob. Both blink, on offset cycles: a
+face that never blinks reads as dead.
 
 The end card is **white and empty of the restaurant**. A mark fighting
 a lit shopfront for attention loses; given its own ground it reads in
@@ -104,8 +103,20 @@ the end, and the retreat between them is a single continuous zoom.
   camera backs out through them.
 - Figures are mirrored as a whole with `scale(side, 1)`, so the acting
   arm can always be authored at local −x and still end up facing the
-  companion. The left guest keeps a bun: it is the only asymmetry on
-  the head, and without it a head tilt on a plain circle is invisible.
+  companion.
+- One dial, `j`, widens the jaw inside `headPath` — a square male jaw
+  and a tapered female one off the same skull, rather than two
+  drawings to keep in sync.
+- Seat the head properly. At the first attempt 64 units of bare neck
+  showed between chin and collar and both guests read as giraffes;
+  the visible neck wants to be about a quarter of head height.
+- Limbs are three overlaid strokes — a mid-tone at full width, a
+  narrow light one offset up, a narrower dark one offset down. A
+  single fat stroke with one hard highlight down it reads as a
+  sausage with a stripe.
+- She is in clay, not the ivory of the design target. Against a cream
+  plaster wall an ivory blouse simply dissolves; the room needed a
+  third colour against the green and the oak.
 - **The arms are a second pass.** `drawFigure` lays down the body and
   head, the table goes over them, then `drawArms` runs again on top —
   otherwise the hands are drawn behind the table and the whole
