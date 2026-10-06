@@ -62,8 +62,31 @@ const CELADON = "#dfe6d9";
 const CREAM = "#faf6ef";
 const WHITE = "#ffffff";
 
-const INK = "#15181a"; // the guests
-const INK_2 = "#232a2e"; // guests further back
+const INK = "#15181a";
+const INK_2 = "#232a2e";
+
+/* The guests, in colour. Still pictograms — flat fills, no outline,
+ * no features — but skin, hair and cloth instead of one solid ink.
+ * Her clay against his green is the only strong colour contrast in
+ * the room, which is what keeps the pair reading as the subject once
+ * the camera has pulled back to the whole shopfront. */
+const GUESTS = {
+  w: {
+    skin: "#e9bb90", hair: "#2a1d16",
+    top: "#c0785e", topD: "#a35e46",
+    leg: "#4e443f", shoe: "#231d1a",
+  },
+  m: {
+    skin: "#dba97a", hair: "#1f1712",
+    top: "#2d6350", topD: "#1d4a3a",
+    leg: "#3a4049", shoe: "#1c1816",
+  },
+  x: {
+    skin: "#d4a67d", hair: "#241c17",
+    top: "#95735b", topD: "#775844",
+    leg: "#454340", shoe: "#211c19",
+  },
+};
 
 const NIGHT_T = "#091018";
 const NIGHT_B = "#1b2836";
@@ -176,6 +199,20 @@ function roundel(ctx, cx, cy, r, ring) {
   ctx.fillText("康", cx, cy + r * 0.04);
 }
 
+/** Hair over the crown and the back of the skull, with a curved
+ *  hairline running down the forehead and in front of the ear.
+ *  Drawn as one closed path: hairline out to the nape, then the
+ *  skull's own circle back over the top. */
+function profileHair(ctx, R) {
+  ctx.beginPath();
+  ctx.moveTo(R * 0.62, -R * 0.78);
+  ctx.quadraticCurveTo(R * 0.24, -R * 0.58, R * 0.04, -R * 0.18);
+  ctx.quadraticCurveTo(-R * 0.12, R * 0.2, -R * 0.707, R * 0.707);
+  ctx.arc(0, 0, R + 0.5, 2.356, 5.384, false);
+  ctx.closePath();
+  ctx.fill();
+}
+
 /* ── The guests ──────────────────────────────────────────────── *
  * Pictograms: a circle for the head, a tapered body, round-capped
  * bars for the limbs, no face. Everything that has to read — the
@@ -193,7 +230,7 @@ function drawFigure(ctx, o) {
     holding = 0, // dumpling scale at the chopstick tip
     sticks = false,
     cup = false,
-    ink = INK,
+    pal = GUESTS.m,
   } = o;
 
   ctx.save();
@@ -221,15 +258,18 @@ function drawFigure(ctx, o) {
   ctx.fillStyle = WOOD_L;
   ctx.fillRect(-128, -166, 168, 3);
 
-  ctx.fillStyle = ink;
-
   /* leg: thigh along the seat, shin to the floor, foot */
-  limb(ctx, -8, -158, 80, -152, 40, ink);
-  limb(ctx, 80, -152, 72, -22, 34, ink);
+  limb(ctx, -8, -158, 80, -152, 40, pal.leg);
+  limb(ctx, 80, -152, 72, -22, 34, pal.leg);
+  ctx.fillStyle = pal.shoe;
   rrect(ctx, 48, -30, 64, 24, 11);
   ctx.fill();
 
   /* body: one clean tapered mass, shoulders dropping into the arms */
+  const bg = ctx.createLinearGradient(0, -348, 0, -148);
+  bg.addColorStop(0, pal.top);
+  bg.addColorStop(1, pal.topD);
+  ctx.fillStyle = bg;
   ctx.beginPath();
   ctx.moveTo(-50, -148);
   ctx.quadraticCurveTo(-58, -248, -46, -316);
@@ -239,22 +279,27 @@ function drawFigure(ctx, o) {
   ctx.closePath();
   ctx.fill();
 
-  /* the resting arm, reaching onto the table */
-  limb(ctx, SHO.x + 12, SHO.y + 30, 92, -250, 27, ink);
-  limb(ctx, 92, -250, 146, -242, 24, ink);
+  /* the resting arm, reaching onto the table — sleeve, then a hand */
+  limb(ctx, SHO.x + 12, SHO.y + 30, 92, -250, 27, pal.top);
+  limb(ctx, 92, -250, 136, -243, 24, pal.top);
+  ctx.fillStyle = pal.skin;
+  circle(ctx, 144, -242, 12.5);
+  ctx.fill();
 
   /* head — a plain circle, held clear of the shoulders like the
      pictogram it is modelled on */
   ctx.save();
   ctx.translate(HEADC.x, HEADC.y);
   ctx.rotate(tilt);
-  ctx.fillStyle = ink;
+  ctx.fillStyle = pal.skin;
   circle(ctx, 0, 0, R);
   ctx.fill();
+  ctx.fillStyle = pal.hair;
   if (bun) {
     circle(ctx, -R * 0.94, -R * 0.44, R * 0.33);
     ctx.fill();
   }
+  profileHair(ctx, R);
   ctx.restore();
 
   /* the acting arm: rest → mouth (lift) or rest → raised (gesture) */
@@ -269,8 +314,11 @@ function drawFigure(ctx, o) {
   const ey = REST.ey + u * (MOUTH.ey - REST.ey) + g * (GEST.ey - REST.ey);
   const hx = REST.hx + u * (MOUTH.hx - REST.hx) + g * (GEST.hx - REST.hx);
   const hy = REST.hy + u * (MOUTH.hy - REST.hy) + g * (GEST.hy - REST.hy);
-  limb(ctx, SHO.x + 4, SHO.y + 22, ex, ey, 28, ink);
-  limb(ctx, ex, ey, hx, hy, 25, ink);
+  limb(ctx, SHO.x + 4, SHO.y + 22, ex, ey, 28, pal.top);
+  limb(ctx, ex, ey, hx, hy, 25, pal.top);
+  ctx.fillStyle = pal.skin;
+  circle(ctx, hx, hy, 12.5);
+  ctx.fill();
 
   /* a teacup, tipped to the lips as the hand comes up. Same solved
      angle as the chopsticks: it points back over the hand toward the
@@ -562,9 +610,10 @@ function sideTable(ctx, x, flip, t, i) {
     ctx.fillStyle = WOOD;
     rrect(ctx, -104, -140, 134, 13, 4);
     ctx.fill();
-    ctx.fillStyle = INK_2;
-    limb(ctx, -6, -132, 62, -128, 32, INK_2);
-    limb(ctx, 62, -128, 56, -14, 27, INK_2);
+    const xp = GUESTS.x;
+    limb(ctx, -6, -132, 62, -128, 32, xp.leg);
+    limb(ctx, 62, -128, 56, -14, 27, xp.leg);
+    ctx.fillStyle = xp.top;
     ctx.beginPath();
     ctx.moveTo(-40, -126);
     ctx.quadraticCurveTo(-46, -230, -36, -282);
@@ -573,9 +622,15 @@ function sideTable(ctx, x, flip, t, i) {
     ctx.quadraticCurveTo(48, -228, 44, -126);
     ctx.closePath();
     ctx.fill();
-    limb(ctx, 8, -288, 78, -230, 22, INK_2);
+    limb(ctx, 8, -288, 78, -230, 22, xp.top);
+    ctx.fillStyle = xp.skin;
     circle(ctx, 16, -348 + bob, 42);
     ctx.fill();
+    ctx.fillStyle = xp.hair;
+    ctx.save();
+    ctx.translate(16, -348 + bob);
+    profileHair(ctx, 42);
+    ctx.restore();
     ctx.restore();
   }
   ctx.restore();
@@ -703,6 +758,7 @@ function drawInterior(ctx, t) {
   ctx.translate(-336, 0);
   drawFigure(ctx, {
     dir: 1,
+    pal: GUESTS.w,
     bun: true,
     cup: true,
     lift: liftL,
@@ -717,6 +773,7 @@ function drawInterior(ctx, t) {
   ctx.translate(336, 0);
   drawFigure(ctx, {
     dir: -1,
+    pal: GUESTS.m,
     sticks: true,
     lift: liftR,
     nod: nodR,

@@ -18,10 +18,12 @@ of the reference the design came from. One eats with chopsticks, the
 other drinks from a teacup, and around 1.9 s both hands are up at
 once, which is the reference's composition.
 
-They are solid ink on a coloured room. The restaurant keeps its
-plaster, oak, lanterns and screens; the two figures are the only
-black in the frame, which is what makes them read instantly at any
-size in the pull-back.
+They are **coloured** pictograms — flat fills, no outline, no facial
+features, but skin, hair and cloth rather than one solid ink. Her
+clay against his green is the only strong colour contrast in the
+room, which is what keeps the pair reading as the subject once the
+camera has pulled back to the whole shopfront. The background
+diners use the same rig in a muted palette so they sit back.
 
 With no faces, every beat has to be pose: the lift, the tip of the
 cup, the chew. The camera's bottom edge is pinned to the floor line
@@ -93,6 +95,12 @@ the end, and the retreat between them is a single continuous zoom.
   so body, limbs and hair-bun flip as one piece. The left guest keeps
   a bun: it is the only asymmetry on the head, and without it a head
   tilt on a plain circle is invisible.
+- **Hair needs a curved hairline, not a clipped rectangle.** Masking
+  the hair to two straight rects — one for the crown, one for the
+  back of the skull — leaves the face as a square panel punched out
+  of a circle, which reads as a rendering bug rather than a haircut.
+  `profileHair()` draws it as one closed path instead: the hairline
+  curve out to the nape, then the skull's own arc back over the top.
 - **A cup is not held like chopsticks.** It needed its own mouth pose
   — lower and further back — plus its own angle ramp, from upright on
   the table to tipped at the lips. Driven off the chopstick pose she
