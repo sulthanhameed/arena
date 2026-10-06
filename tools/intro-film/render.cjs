@@ -88,17 +88,36 @@ const GUESTS = {
   },
 };
 
-const NIGHT_T = "#091018";
-const NIGHT_B = "#1b2836";
-const BUILD = "#15402a";
-const BUILD_L = "#1d5538";
-const BUILD_LL = "#2a6b48";
-const STREET = "#0f161d";
+const NIGHT_T = "#091620";
+const NIGHT_B = "#1f3246";
+const STREET = "#141d26";
+
+/* The shopfront. Green joinery fitted into a warm stone building,
+ * with brass as the accent metal. A flat green slab with a white
+ * rectangle stuck on it was never going to read as a designed
+ * restaurant — what sells a shopfront is hierarchy (stone pier,
+ * fascia, transom line, base) and one metal running through all
+ * of it. */
+const STONE = "#3a362e";
+const STONE_L = "#4b453a";
+const STONE_D = "#282521";
+const JOIN = "#16402b";
+const JOIN_L = "#1e5538";
+const JOIN_D = "#0e2c1d";
+const BRASS = "#c6a02f";
+const BRASS_L = "#e8ca63";
+const BRASS_D = "#8d6f1d";
 
 /* ── Geometry ────────────────────────────────────────────────── */
 const GLASS = { x: 430, y: 430, w: 1060, h: 450 };
 const GROUND = 880;
 const BOARD = { x: 630, y: 284, w: 660, h: 136 };
+const PIER_L = { x: 286, w: 132 };
+const PIER_R = { x: 1502, w: 132 };
+const SHOP = { x: 418, w: 1084 }; // the opening between the piers
+const FASCIA = { y: 250, h: 152 };
+const TRANSOM = 540; // the single horizontal line across the glazing
+const DOOR = { x: 872, w: 176 };
 const K = 0.41;
 const ORIGIN = { x: 960, y: GROUND };
 
@@ -179,10 +198,15 @@ function tracked(ctx, text, cx, y, spacing, perCharAlpha) {
 /* ── The mark ────────────────────────────────────────────────── *
  * One definition of the roundel, used at two sizes: small and lit
  * on the shopfront, large on the end card.                        */
-function roundel(ctx, cx, cy, r, ring) {
+function roundel(ctx, cx, cy, r, ring, invert) {
   const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
-  g.addColorStop(0, GREEN);
-  g.addColorStop(1, GREEN_D);
+  if (invert) {
+    g.addColorStop(0, "#fffdf7");
+    g.addColorStop(1, "#ece3cf");
+  } else {
+    g.addColorStop(0, GREEN);
+    g.addColorStop(1, GREEN_D);
+  }
   ctx.fillStyle = g;
   circle(ctx, cx, cy, r);
   ctx.fill();
@@ -192,7 +216,7 @@ function roundel(ctx, cx, cy, r, ring) {
     circle(ctx, cx, cy, r);
     ctx.stroke();
   }
-  ctx.fillStyle = WHITE;
+  ctx.fillStyle = invert ? GREEN_D : WHITE;
   ctx.font = `${Math.round(r * 1.2)}px KhangCn`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -788,150 +812,319 @@ function drawInterior(ctx, t) {
 /** The restaurant's own sign: lit from the moment you can see it,
  *  because a shut-off sign makes a building look closed. The big
  *  statement of the mark happens later, on its own card. */
-function signLockup(ctx) {
-  const cy = BOARD.y + BOARD.h / 2;
-  const r = 46;
-  const gap = 30;
+/** A picture light over the fascia. Three of them in a row is the
+ *  single clearest signal that a shopfront was designed rather than
+ *  assembled: the sign stops being a flat panel and becomes a lit
+ *  surface with falloff. */
+function signLamp(ctx, x, yb) {
+  ctx.fillStyle = BRASS_D;
+  rrect(ctx, x - 3.5, yb - 40, 7, 22, 3);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x - 15, yb - 20);
+  ctx.lineTo(x + 15, yb - 20);
+  ctx.lineTo(x + 23, yb);
+  ctx.lineTo(x - 23, yb);
+  ctx.closePath();
+  ctx.fillStyle = BRASS;
+  ctx.fill();
+  ctx.fillStyle = BRASS_L;
+  ctx.fillRect(x - 15, yb - 21, 30, 3);
+  ctx.fillStyle = "rgba(255,232,180,0.95)";
+  rrect(ctx, x - 19, yb - 3, 38, 5, 2.5);
+  ctx.fill();
 
-  ctx.font = "60px KhangDisplay";
+  const pool = ctx.createRadialGradient(x, yb + 34, 6, x, yb + 34, 196);
+  pool.addColorStop(0, "rgba(255,232,180,0.20)");
+  pool.addColorStop(0.55, "rgba(255,232,180,0.07)");
+  pool.addColorStop(1, "rgba(255,232,180,0)");
+  ctx.fillStyle = pool;
+  circle(ctx, x, yb + 34, 196);
+  ctx.fill();
+}
+
+/** The name on the fascia. Cream and brass on deep green rather
+ *  than a white panel pasted over it: signwriting, not a sticker. */
+function signLockup(ctx) {
+  const cy = FASCIA.y + 74;
+
+  ctx.font = "62px KhangDisplay";
   const name = "KHANG";
-  const track = 13;
+  const track = 15;
   let tw = -track;
   for (const c of name) tw += ctx.measureText(c).width + track;
 
+  const r = 45;
+  const gap = 34;
   const total = r * 2 + gap + tw;
   const left = 960 - total / 2;
 
-  /* lit board */
-  ctx.fillStyle = CREAM;
-  rrect(ctx, BOARD.x, BOARD.y, BOARD.w, BOARD.h, 6);
-  ctx.fill();
-  const warm = ctx.createRadialGradient(960, cy, 20, 960, cy, 420);
-  warm.addColorStop(0, "rgba(255,221,150,0.3)");
-  warm.addColorStop(1, "rgba(255,221,150,0)");
-  ctx.fillStyle = warm;
-  ctx.fillRect(BOARD.x - 200, BOARD.y - 120, BOARD.w + 400, BOARD.h + 240);
+  roundel(ctx, left + r, cy - 4, r, BRASS, true);
 
-  roundel(ctx, left + r, cy, r, null);
-
-  ctx.fillStyle = GREEN_D;
-  ctx.font = "60px KhangDisplay";
+  ctx.fillStyle = "#fdf8ec";
+  ctx.font = "62px KhangDisplay";
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  tracked(ctx, name, left + r * 2 + gap + tw / 2, cy + 7, track);
+  tracked(ctx, name, left + r * 2 + gap + tw / 2, cy + 6, track);
 
-  ctx.fillStyle = "rgba(6,78,46,0.6)";
-  ctx.font = "14px KhangSans";
-  tracked(ctx, "CHINESE · DIMSUM", left + r * 2 + gap + tw / 2, cy + 36, 5.8);
+  const rl = left + r * 2 + gap;
+  ctx.fillStyle = BRASS;
+  ctx.fillRect(rl, cy + 26, tw, 2);
+
+  ctx.fillStyle = BRASS_L;
+  ctx.font = "15px KhangSans";
+  tracked(ctx, "CHINESE · DIM SUM", rl + tw / 2, cy + 52, 7);
+}
+
+/** A projecting blade sign on the near pier — what tells you this
+ *  is a restaurant from down the street rather than head-on. */
+function bladeSign(ctx) {
+  const bx = 180, by = 296, bw = 88, bh = 214;
+  ctx.fillStyle = BRASS_D;
+  ctx.fillRect(bx + bw, by + 18, PIER_L.x - bx - bw, 7);
+  ctx.fillRect(bx + bw, by + 108, PIER_L.x - bx - bw, 5);
+  ctx.beginPath();
+  ctx.moveTo(PIER_L.x, by + 25);
+  ctx.lineTo(PIER_L.x, by + 108);
+  ctx.lineTo(bx + bw, by + 108);
+  ctx.closePath();
+  ctx.fill();
+
+  const g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+  g.addColorStop(0, JOIN_D);
+  g.addColorStop(0.45, JOIN_L);
+  g.addColorStop(1, JOIN);
+  ctx.fillStyle = g;
+  rrect(ctx, bx, by, bw, bh, 5);
+  ctx.fill();
+  ctx.strokeStyle = BRASS_D;
+  ctx.lineWidth = 2.5;
+  rrect(ctx, bx + 8, by + 8, bw - 16, bh - 16, 3);
+  ctx.stroke();
+
+  ctx.fillStyle = "#f6edd8";
+  ctx.font = "54px KhangCn";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("康", bx + bw / 2, by + 62);
+  ctx.font = "26px KhangDisplay";
+  for (let i = 0; i < 5; i++) {
+    ctx.fillText("KHANG"[i], bx + bw / 2, by + 118 + i * 30);
+  }
+
+  const glow = ctx.createRadialGradient(bx + bw / 2, by + bh / 2, 10, bx + bw / 2, by + bh / 2, 190);
+  glow.addColorStop(0, "rgba(255,221,150,0.16)");
+  glow.addColorStop(1, "rgba(255,221,150,0)");
+  ctx.fillStyle = glow;
+  circle(ctx, bx + bw / 2, by + bh / 2, 190);
+  ctx.fill();
 }
 
 function drawFacade(ctx, t) {
-  const sky = ctx.createLinearGradient(0, -200, 0, GROUND);
+  const sky = ctx.createLinearGradient(0, -300, 0, GROUND);
   sky.addColorStop(0, NIGHT_T);
-  sky.addColorStop(0.72, "#13202c");
+  sky.addColorStop(0.62, "#16263a");
   sky.addColorStop(1, NIGHT_B);
   ctx.fillStyle = sky;
   ctx.fillRect(-400, -400, W + 800, GROUND + 400);
 
-  ctx.fillStyle = STREET;
-  ctx.fillRect(-400, GROUND, W + 800, H - GROUND + 400);
-  ctx.fillStyle = "#19242e";
-  ctx.fillRect(-400, GROUND, W + 800, 10);
-
-  ctx.fillStyle = BUILD;
-  ctx.fillRect(330, 242, 1260, GROUND - 242);
-
-  /* cornice */
-  ctx.fillStyle = BUILD_L;
-  rrect(ctx, 296, 228, 1328, 50, 8);
-  ctx.fill();
-  ctx.fillStyle = "rgba(255,255,255,0.09)";
-  ctx.fillRect(296, 228, 1328, 3);
-
-  /* piers */
-  ctx.fillStyle = BUILD_L;
-  ctx.fillRect(330, 278, 104, GROUND - 278);
-  ctx.fillRect(1486, 278, 104, GROUND - 278);
-  ctx.fillStyle = BUILD_LL;
-  ctx.fillRect(330, 278, 5, GROUND - 278);
-  ctx.fillRect(1585, 278, 5, GROUND - 278);
-  for (const px of [382, 1538]) {
-    ctx.fillStyle = "#e8cc96";
-    rrect(ctx, px - 11, 470, 22, 34, 5);
-    ctx.fill();
-    const l = ctx.createRadialGradient(px, 500, 4, px, 500, 92);
-    l.addColorStop(0, "rgba(255,218,150,0.4)");
-    l.addColorStop(1, "rgba(255,218,150,0)");
-    ctx.fillStyle = l;
-    circle(ctx, px, 500, 92);
+  /* the street it stands on. Without neighbours the building floated
+     in a void, which is most of why it read as clip art. */
+  ctx.fillStyle = "#121e2a";
+  ctx.fillRect(-400, 306, 692, GROUND - 306);
+  ctx.fillRect(1634, 272, 700, GROUND - 272);
+  ctx.fillStyle = "#0d1824";
+  ctx.fillRect(-400, 306, 692, 14);
+  ctx.fillRect(1634, 272, 700, 14);
+  for (const [wx, wy, lit] of [[84, 398, 1], [168, 398, 0], [84, 536, 0],
+                               [1716, 366, 0], [1800, 366, 1], [1800, 504, 0]]) {
+    if (lit) {
+      const wg = ctx.createRadialGradient(wx + 22, wy + 32, 4, wx + 22, wy + 32, 96);
+      wg.addColorStop(0, "rgba(255,198,118,0.22)");
+      wg.addColorStop(1, "rgba(255,198,118,0)");
+      ctx.fillStyle = wg;
+      circle(ctx, wx + 22, wy + 32, 96);
+      ctx.fill();
+    }
+    ctx.fillStyle = lit ? "rgba(255,206,142,0.5)" : "rgba(120,150,180,0.07)";
+    rrect(ctx, wx, wy, 44, 64, 3);
     ctx.fill();
   }
 
+  ctx.fillStyle = STREET;
+  ctx.fillRect(-400, GROUND, W + 800, H - GROUND + 400);
+  ctx.fillStyle = "#1b2630";
+  ctx.fillRect(-400, GROUND, W + 800, 8);
+  ctx.fillStyle = "#0e161d";
+  ctx.fillRect(-400, GROUND + 132, W + 800, 9);
+
+  /* the building the shop is fitted into */
+  const stone = ctx.createLinearGradient(0, 196, 0, GROUND);
+  stone.addColorStop(0, STONE_L);
+  stone.addColorStop(0.55, STONE);
+  stone.addColorStop(1, STONE_D);
+  ctx.fillStyle = stone;
+  ctx.fillRect(286, 196, 1348, GROUND - 196);
+
+  /* fascia */
+  const fg = ctx.createLinearGradient(0, FASCIA.y, 0, FASCIA.y + FASCIA.h);
+  fg.addColorStop(0, JOIN_L);
+  fg.addColorStop(1, JOIN);
+  ctx.fillStyle = fg;
+  ctx.fillRect(SHOP.x, FASCIA.y, SHOP.w, FASCIA.h);
+  ctx.fillStyle = BRASS_D;
+  ctx.fillRect(SHOP.x, FASCIA.y, SHOP.w, 3);
+  ctx.fillRect(SHOP.x, FASCIA.y + FASCIA.h - 4, SHOP.w, 4);
+  ctx.fillStyle = "rgba(0,0,0,0.22)";
+  ctx.fillRect(SHOP.x, FASCIA.y + FASCIA.h, SHOP.w, 10);
+
   signLockup(ctx);
+  for (const lx of [636, 960, 1284]) signLamp(ctx, lx, FASCIA.y + 16);
+
+  /* cornice: a projecting band with a shadow under it, which is what
+     stops the top of the building reading as a cut-off rectangle */
+  ctx.fillStyle = STONE;
+  rrect(ctx, 258, 186, 1404, 46, 4);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.09)";
+  ctx.fillRect(258, 186, 1404, 4);
+  ctx.fillStyle = BRASS_D;
+  ctx.fillRect(258, 226, 1404, 3);
+  ctx.fillStyle = "rgba(0,0,0,0.34)";
+  ctx.fillRect(286, 232, 1348, 16);
+
+  /* piers */
+  for (const p of [PIER_L, PIER_R]) {
+    const pg = ctx.createLinearGradient(p.x, 0, p.x + p.w, 0);
+    pg.addColorStop(0, STONE_D);
+    pg.addColorStop(0.38, STONE_L);
+    pg.addColorStop(1, STONE_D);
+    ctx.fillStyle = pg;
+    ctx.fillRect(p.x, 232, p.w, GROUND - 232);
+    ctx.fillStyle = "rgba(0,0,0,0.14)";
+    for (let y = 318; y < GROUND - 80; y += 104) ctx.fillRect(p.x, y, p.w, 2);
+    ctx.fillStyle = BRASS_D;
+    ctx.fillRect(p.x, GROUND - 82, p.w, 4);
+    ctx.fillStyle = STONE_D;
+    ctx.fillRect(p.x, GROUND - 78, p.w, 78);
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.fillRect(p.x, GROUND - 78, p.w, 2);
+  }
+
+  bladeSign(ctx);
+
+  /* two clipped bays on the pavement, clear of the glass so they
+     frame the shop instead of sitting on top of the diners */
+  for (const px of [224, 1696]) {
+    ctx.fillStyle = "#2b2823";
+    rrect(ctx, px - 40, GROUND - 76, 80, 76, 5);
+    ctx.fill();
+    ctx.fillStyle = BRASS_D;
+    ctx.fillRect(px - 40, GROUND - 70, 80, 4);
+    ctx.fillRect(px - 40, GROUND - 24, 80, 4);
+    ctx.fillStyle = "#3b3126";
+    ctx.fillRect(px - 5, GROUND - 162, 10, 92);
+    ctx.fillStyle = GREEN_DD;
+    circle(ctx, px, GROUND - 198, 50);
+    ctx.fill();
+    ctx.fillStyle = "#17402c";
+    circle(ctx, px - 17, GROUND - 214, 31);
+    ctx.fill();
+    circle(ctx, px + 19, GROUND - 206, 27);
+    ctx.fill();
+  }
 }
 
-/** Frame, mullions and everything that sits in front of the glass. */
+/** Frame, mullions and everything that sits in front of the glass.
+ *  Three bays — window, entrance, window — tied together by one
+ *  transom line running the full width. The old five equal bays
+ *  with a door hidden in the middle of one gave the eye nothing to
+ *  hold on to and buried the entrance. */
 function drawGlazingFrame(ctx, alpha) {
   if (alpha <= 0.001) return;
   ctx.save();
   ctx.globalAlpha *= alpha;
   const { x, y, w, h } = GLASS;
 
-  ctx.fillStyle = BUILD_L;
-  ctx.fillRect(x - 10, y - 22, w + 20, 24);
+  /* head beam */
+  ctx.fillStyle = JOIN_L;
+  ctx.fillRect(x - 14, y - 20, w + 28, 22);
+  ctx.fillStyle = BRASS_D;
+  ctx.fillRect(x - 14, y, w + 28, 2);
 
-  const bays = 5;
-  const bw = w / bays;
-  for (let i = 0; i <= bays; i++) {
-    ctx.fillStyle = BUILD_L;
-    ctx.fillRect(x + i * bw - 7, y, 14, h);
-    ctx.fillStyle = BUILD_LL;
-    ctx.fillRect(x + i * bw - 7, y, 3, h);
-  }
-  const dx = x + 2 * bw;
-  ctx.fillStyle = BUILD_L;
-  ctx.fillRect(dx + bw / 2 - 6, y + 30, 12, h - 30);
-  ctx.fillStyle = "#e8cc96";
-  rrect(ctx, dx + bw / 2 - 24, y + 212, 7, 62, 3.5);
-  ctx.fill();
-  rrect(ctx, dx + bw / 2 + 17, y + 212, 7, 62, 3.5);
-  ctx.fill();
+  const mullions = [x, DOOR.x, DOOR.x + DOOR.w, x + w];
+  const post = (mx, pw) => {
+    ctx.fillStyle = JOIN_L;
+    ctx.fillRect(mx - pw / 2, y, pw, h);
+    ctx.fillStyle = JOIN_D;
+    ctx.fillRect(mx + pw / 2 - 3, y, 3, h);
+  };
+  for (const mx of mullions) post(mx, mx === x || mx === x + w ? 18 : 13);
 
-  ctx.fillStyle = BUILD_L;
-  ctx.fillRect(x - 10, GROUND - 10, w + 20, 14);
-  ctx.fillStyle = "#1d3a26";
-  ctx.fillRect(330, GROUND - 10, 1260, 14);
+  /* the transom line */
+  ctx.fillStyle = JOIN_L;
+  ctx.fillRect(x, TRANSOM - 7, w, 14);
+  ctx.fillStyle = JOIN_D;
+  ctx.fillRect(x, TRANSOM + 4, w, 3);
+  ctx.fillStyle = BRASS_D;
+  ctx.fillRect(x, TRANSOM - 8, w, 1.5);
 
-  ctx.fillStyle = "#16261b";
-  rrect(ctx, 790, GROUND + 4, 340, 20, 5);
+  /* the entrance: one leaf, so nothing cuts down the middle of the
+     scroll hanging on the back wall */
+  const dl = DOOR.x + 7;
+  const dr = DOOR.x + DOOR.w - 7;
+  ctx.fillStyle = JOIN_L;
+  ctx.fillRect(dl, TRANSOM + 7, 21, GROUND - TRANSOM - 7);
+  ctx.fillRect(dr - 21, TRANSOM + 7, 21, GROUND - TRANSOM - 7);
+  ctx.fillRect(dl, TRANSOM + 7, dr - dl, 18);
+  ctx.fillStyle = JOIN_D;
+  ctx.fillRect(dl + 18, TRANSOM + 7, 3, GROUND - TRANSOM - 7);
+  ctx.fillStyle = JOIN;
+  ctx.fillRect(dl, GROUND - 76, dr - dl, 76);
+  ctx.fillStyle = BRASS_D;
+  ctx.fillRect(dl, GROUND - 80, dr - dl, 4);
+  ctx.fillRect(dr - 24, TRANSOM + 76, 14, 6);
+  ctx.fillRect(dr - 24, TRANSOM + 190, 14, 6);
+  ctx.fillStyle = BRASS;
+  rrect(ctx, dr - 31, TRANSOM + 64, 9, 138, 4.5);
   ctx.fill();
-  const spill = ctx.createLinearGradient(0, GROUND, 0, GROUND + 160);
-  spill.addColorStop(0, "rgba(255,214,150,0.3)");
-  spill.addColorStop(1, "rgba(255,214,150,0)");
-  ctx.fillStyle = spill;
+  ctx.fillStyle = BRASS_L;
+  ctx.fillRect(dr - 31, TRANSOM + 64, 3, 138);
+
+  /* base rail */
+  ctx.fillStyle = JOIN_L;
+  ctx.fillRect(x - 14, GROUND - 12, w + 28, 14);
+  ctx.fillStyle = BRASS_D;
+  ctx.fillRect(x - 14, GROUND - 13, w + 28, 2);
+
+  /* light on the pavement: a soft pool with a reflection under the
+     door, instead of the flat trapezoid of coloured gel it was */
+  const pool = ctx.createRadialGradient(960, GROUND + 10, 30, 960, GROUND + 10, 620);
+  pool.addColorStop(0, "rgba(255,216,152,0.30)");
+  pool.addColorStop(0.5, "rgba(255,216,152,0.10)");
+  pool.addColorStop(1, "rgba(255,216,152,0)");
+  ctx.fillStyle = pool;
+  ctx.fillRect(x - 420, GROUND, w + 840, 180);
+  const streak = ctx.createLinearGradient(0, GROUND, 0, GROUND + 124);
+  streak.addColorStop(0, "rgba(255,226,170,0.26)");
+  streak.addColorStop(1, "rgba(255,226,170,0)");
+  ctx.fillStyle = streak;
   ctx.beginPath();
-  ctx.moveTo(x + 40, GROUND);
-  ctx.lineTo(x + w - 40, GROUND);
-  ctx.lineTo(x + w + 120, GROUND + 160);
-  ctx.lineTo(x - 120, GROUND + 160);
+  ctx.moveTo(DOOR.x + 4, GROUND);
+  ctx.lineTo(DOOR.x + DOOR.w - 4, GROUND);
+  ctx.lineTo(DOOR.x + DOOR.w + 44, GROUND + 124);
+  ctx.lineTo(DOOR.x - 44, GROUND + 124);
   ctx.closePath();
   ctx.fill();
 
-  for (const px of [472, 1448]) {
-    ctx.fillStyle = "#2e4132";
-    rrect(ctx, px - 34, GROUND - 92, 68, 92, 8);
-    ctx.fill();
-    ctx.fillStyle = GREEN_DD;
-    circle(ctx, px, GROUND - 128, 44);
-    ctx.fill();
-    circle(ctx, px - 28, GROUND - 104, 27);
-    ctx.fill();
-    circle(ctx, px + 28, GROUND - 106, 25);
-    ctx.fill();
-    ctx.fillStyle = GREEN_D;
-    circle(ctx, px - 8, GROUND - 142, 22);
-    ctx.fill();
-  }
+  /* step and mat */
+  ctx.fillStyle = "#2c2a25";
+  rrect(ctx, DOOR.x - 28, GROUND + 2, DOOR.w + 56, 22, 4);
+  ctx.fill();
+  ctx.fillStyle = "#1d1b18";
+  rrect(ctx, DOOR.x - 10, GROUND + 26, DOOR.w + 20, 16, 3);
+  ctx.fill();
+
   ctx.restore();
 }
 

@@ -30,6 +30,13 @@ cup, the chew. The camera's bottom edge is pinned to the floor line
 so the whole tableau — chairs, legs, feet — sits in frame the way
 the reference does.
 
+The shopfront is green joinery fitted into a warm stone building,
+with brass as the accent metal: a cream-and-brass sign painted
+straight onto the deep green fascia, three picture lights washing
+it, a projecting blade sign on the near pier, and two clipped bays
+on the pavement. Three bays — window, entrance, window — tied
+together by one transom line running the full width.
+
 Everything is drawn: the performance, the camera move and both the
 shopfront sign and the end card are baked into the video, so the site
 only has to play it.
@@ -101,6 +108,22 @@ the end, and the retreat between them is a single continuous zoom.
   of a circle, which reads as a rendering bug rather than a haircut.
   `profileHair()` draws it as one closed path instead: the hairline
   curve out to the nape, then the skull's own arc back over the top.
+- **A flat slab with a white rectangle on it is not a shopfront.**
+  What sells one is hierarchy — stone pier, fascia, transom line,
+  base — and one metal running through all of it. The earlier
+  version had a single green mass, a white sign panel floating on
+  it like a sticker, and five equal bays with the door hidden in
+  the middle of one, which gave the eye nothing to hold and buried
+  the entrance.
+- **A building with no neighbours floats in a void**, and that is
+  most of why the old one read as clip art. Two dim blocks either
+  side and a kerb line are enough to put it on a street.
+- **A hard-edged triangle reads as a shadow, not as light.** The
+  picture lights' beams had to become soft radial pools before they
+  stopped looking like dark wedges painted on the fascia.
+- **A pull handle needs a door leaf to belong to.** Drawn into a
+  bare opening it reads as a brass stick floating in the glass;
+  it needs stiles, a top rail and a kick panel around it.
 - **A cup is not held like chopsticks.** It needed its own mouth pose
   — lower and further back — plus its own angle ramp, from upright on
   the table to tipped at the lips. Driven off the chopstick pose she
