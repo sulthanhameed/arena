@@ -30,7 +30,15 @@ cup, the chew. The camera's bottom edge is pinned to the floor line
 so the whole tableau — chairs, legs, feet — sits in frame the way
 the reference does.
 
-The shopfront is green joinery fitted into a warm stone building,
+The palette is clay plaster, ink-green joinery, aged brass, walnut
+and amber light — warmer and lower-keyed than the grey stone and
+bright green it replaced. The glass carries a sky tint and soft
+diagonal reflections, the plaster and limewash carry fixed
+blotches, the piers throw shadows onto paving that has joints in
+it, and the transom band is divided into lights with gold
+signwriting across it.
+
+The shopfront is green joinery fitted into a warm clay building,
 with brass as the accent metal: a cream-and-brass sign painted
 straight onto the deep green fascia, three picture lights washing
 it, a projecting blade sign on the near pier, and two clipped bays
@@ -124,6 +132,17 @@ the end, and the retreat between them is a single continuous zoom.
 - **A pull handle needs a door leaf to belong to.** Drawn into a
   bare opening it reads as a brass stick floating in the glass;
   it needs stiles, a top rail and a kick panel around it.
+- **Flat tone is the thing that reads as fake.** Plaster, limewash
+  and paving all needed blotching and jointing before they stopped
+  looking like swatches. The blotches have to be *fixed* constants,
+  not random per call — random ones crawl between frames.
+- **Glazing needs reflections or it reads as a hole.** But the sky
+  tint down the top of the glass went in at 0.16 alpha and turned
+  the transom lights into opaque grey panels, killing the warm
+  interior behind them; 0.07 with a faster falloff is the whole
+  difference between glass and cardboard.
+- **Gold signwriting belongs in the transom band.** Across the
+  lower glass it lands on top of the background diners.
 - **A cup is not held like chopsticks.** It needed its own mouth pose
   — lower and further back — plus its own angle ramp, from upright on
   the table to tipped at the lips. Driven off the chopstick pose she

@@ -35,30 +35,30 @@ const OUT = process.argv[2] || "/tmp/vid/frames";
  * Restrained and warm: soft white plaster, light oak, one green,
  * one amber. The guests are a single solid ink, so every bit of
  * colour in the frame belongs to the room rather than to them.    */
-const WALL = "#f7f1e6";
-const WALL_D = "#ece2cf";
-const PAPER = "#f4ecda";
-const FLOOR = "#c49d71";
-const FLOOR_D = "#aa8255";
-const FLOOR_L = "#d8b58a";
+const WALL = "#e7dbc5";
+const WALL_D = "#d4c3a6";
+const PAPER = "#f0e5cd";
+const FLOOR = "#7d5c41";
+const FLOOR_D = "#5f4530";
+const FLOOR_L = "#946f50";
 
-const WOOD = "#c99f72";
-const WOOD_D = "#a87c51";
-const WOOD_L = "#e0c29b";
+const WOOD = "#916845";
+const WOOD_D = "#6d4d31";
+const WOOD_L = "#ad8662";
 
 const GREEN = "#15803d";
 const GREEN_D = "#064e2e";
 const GREEN_DD = "#05361f";
 const JADE = "#16a34a";
-const SCREEN_F = "#2f6b49";
+const SCREEN_F = "#24493a";
 
-const GLOW = "#f7cd78";
-const GLOW_D = "#e2a63f";
-const LAMP = "#fff2d2";
+const GLOW = "#f3bd63";
+const GLOW_D = "#dc9a31";
+const LAMP = "#ffecbb";
 
-const RED = "#b3392b";
-const RED_D = "#8b291d";
-const CELADON = "#dfe6d9";
+const RED = "#a8432f";
+const RED_D = "#7e2d1e";
+const CELADON = "#d8dfd1";
 const CREAM = "#faf6ef";
 const WHITE = "#ffffff";
 
@@ -73,24 +73,24 @@ const INK_2 = "#232a2e";
 const GUESTS = {
   w: {
     skin: "#e9bb90", hair: "#2a1d16",
-    top: "#c0785e", topD: "#a35e46",
-    leg: "#4e443f", shoe: "#231d1a",
+    top: "#8d4553", topD: "#6f3341",
+    leg: "#473c38", shoe: "#231d1a",
   },
   m: {
     skin: "#dba97a", hair: "#1f1712",
-    top: "#2d6350", topD: "#1d4a3a",
-    leg: "#3a4049", shoe: "#1c1816",
+    top: "#324c5e", topD: "#243a49",
+    leg: "#363b43", shoe: "#1c1816",
   },
   x: {
     skin: "#d4a67d", hair: "#241c17",
-    top: "#95735b", topD: "#775844",
-    leg: "#454340", shoe: "#211c19",
+    top: "#6f5a4b", topD: "#564436",
+    leg: "#403c37", shoe: "#211c19",
   },
 };
 
-const NIGHT_T = "#091620";
-const NIGHT_B = "#1f3246";
-const STREET = "#141d26";
+const NIGHT_T = "#0c1120";
+const NIGHT_B = "#2b2a40";
+const STREET = "#1b1a23";
 
 /* The shopfront. Green joinery fitted into a warm stone building,
  * with brass as the accent metal. A flat green slab with a white
@@ -98,15 +98,15 @@ const STREET = "#141d26";
  * restaurant — what sells a shopfront is hierarchy (stone pier,
  * fascia, transom line, base) and one metal running through all
  * of it. */
-const STONE = "#3a362e";
-const STONE_L = "#4b453a";
-const STONE_D = "#282521";
-const JOIN = "#16402b";
-const JOIN_L = "#1e5538";
-const JOIN_D = "#0e2c1d";
-const BRASS = "#c6a02f";
-const BRASS_L = "#e8ca63";
-const BRASS_D = "#8d6f1d";
+const STONE = "#7b6253";
+const STONE_L = "#8e7364";
+const STONE_D = "#5a4738";
+const JOIN = "#1b332a";
+const JOIN_L = "#254639";
+const JOIN_D = "#0f1f18";
+const BRASS = "#b8954a";
+const BRASS_L = "#ddbd73";
+const BRASS_D = "#86692b";
 
 /* ── Geometry ────────────────────────────────────────────────── */
 const GLASS = { x: 430, y: 430, w: 1060, h: 450 };
@@ -669,6 +669,30 @@ function drawInterior(ctx, t) {
   pool.addColorStop(1, "rgba(255,218,150,0)");
   ctx.fillStyle = pool;
   ctx.fillRect(-1600, -1240, 3200, 1240);
+  /* limewash is never one flat tone. Fixed blotches, not random
+     ones, or they crawl from frame to frame. */
+  for (const [mx, my, mr, ma] of [
+    [-980, -760, 520, 0.05], [-240, -520, 430, -0.035], [560, -840, 600, 0.04],
+    [1180, -430, 470, -0.03], [120, -1060, 520, 0.03],
+  ]) {
+    const g = ctx.createRadialGradient(mx, my, 10, mx, my, mr);
+    g.addColorStop(0, `rgba(${ma > 0 ? "255,248,232" : "92,70,48"},${Math.abs(ma)})`);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    circle(ctx, mx, my, mr);
+    ctx.fill();
+  }
+
+  /* picture rail. The wall above the guests was a bare sweep of
+     plaster in the opening shot; a rail gives the room a datum and
+     reads as a built interior rather than a backdrop. */
+  ctx.fillStyle = WOOD_D;
+  ctx.fillRect(-1600, -548, 3200, 13);
+  ctx.fillStyle = WOOD;
+  ctx.fillRect(-1600, -548, 3200, 4);
+  ctx.fillStyle = "rgba(0,0,0,0.07)";
+  ctx.fillRect(-1600, -535, 3200, 10);
+
   /* skirting, well below the table */
   ctx.fillStyle = WALL_D;
   ctx.fillRect(-1600, -92, 3200, 92);
@@ -958,13 +982,32 @@ function drawFacade(ctx, t) {
   ctx.fillStyle = "#0e161d";
   ctx.fillRect(-400, GROUND + 132, W + 800, 9);
 
-  /* the building the shop is fitted into */
+  /* the building the shop is fitted into. Plaster is never one flat
+     tone — a few fixed soft blotches stop it reading as a swatch,
+     and being fixed rather than random they do not crawl between
+     frames. */
   const stone = ctx.createLinearGradient(0, 196, 0, GROUND);
   stone.addColorStop(0, STONE_L);
   stone.addColorStop(0.55, STONE);
   stone.addColorStop(1, STONE_D);
   ctx.fillStyle = stone;
   ctx.fillRect(286, 196, 1348, GROUND - 196);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(286, 196, 1348, GROUND - 196);
+  ctx.clip();
+  for (const [mx, my, mr, ma] of [
+    [360, 420, 210, 0.05], [540, 300, 160, -0.04], [1180, 380, 240, 0.045],
+    [1560, 560, 190, -0.05], [820, 700, 220, 0.035], [1420, 260, 150, -0.03],
+  ]) {
+    const g = ctx.createRadialGradient(mx, my, 4, mx, my, mr);
+    g.addColorStop(0, `rgba(${ma > 0 ? "255,246,232" : "40,30,22"},${Math.abs(ma)})`);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    circle(ctx, mx, my, mr);
+    ctx.fill();
+  }
+  ctx.restore();
 
   /* fascia */
   const fg = ctx.createLinearGradient(0, FASCIA.y, 0, FASCIA.y + FASCIA.h);
@@ -1011,7 +1054,60 @@ function drawFacade(ctx, t) {
     ctx.fillRect(p.x, GROUND - 78, p.w, 2);
   }
 
+  /* the piers throw a shadow onto the pavement and catch the warm
+     light coming out of the glass — the two cues that stop a flat
+     elevation looking like a diagram */
+  for (const p of [PIER_L, PIER_R]) {
+    const inner = p === PIER_L ? p.x + p.w : p.x;
+    const dir = p === PIER_L ? -1 : 1;
+    const bleed = ctx.createLinearGradient(inner, 0, inner + dir * 90, 0);
+    bleed.addColorStop(0, "rgba(255,206,146,0.17)");
+    bleed.addColorStop(1, "rgba(255,206,146,0)");
+    ctx.fillStyle = bleed;
+    ctx.fillRect(Math.min(inner, inner + dir * 90), 430, 90, GROUND - 430);
+  }
+  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  ctx.beginPath();
+  ctx.moveTo(PIER_L.x, GROUND);
+  ctx.lineTo(PIER_L.x + PIER_L.w, GROUND);
+  ctx.lineTo(PIER_L.x + PIER_L.w - 52, GROUND + 74);
+  ctx.lineTo(PIER_L.x - 52, GROUND + 74);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(PIER_R.x, GROUND);
+  ctx.lineTo(PIER_R.x + PIER_R.w, GROUND);
+  ctx.lineTo(PIER_R.x + PIER_R.w + 52, GROUND + 74);
+  ctx.lineTo(PIER_R.x + 52, GROUND + 74);
+  ctx.closePath();
+  ctx.fill();
+
+  /* paving */
+  ctx.strokeStyle = "rgba(0,0,0,0.22)";
+  ctx.lineWidth = 2;
+  for (let i = -2; i < 10; i++) {
+    const px = 960 + i * 236 - 118;
+    ctx.beginPath();
+    ctx.moveTo(px, GROUND + 8);
+    ctx.lineTo(px + (px - 960) * 0.42, GROUND + 132);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(-400, GROUND + 64);
+  ctx.lineTo(W + 400, GROUND + 64);
+  ctx.stroke();
+
   bladeSign(ctx);
+
+  /* a brass menu case on the near pier */
+  ctx.fillStyle = BRASS_D;
+  rrect(ctx, PIER_L.x + 22, 546, 88, 124, 4);
+  ctx.fill();
+  ctx.fillStyle = "#1a1612";
+  rrect(ctx, PIER_L.x + 27, 551, 78, 114, 3);
+  ctx.fill();
+  ctx.fillStyle = "rgba(240,228,200,0.5)";
+  for (let i = 0; i < 6; i++) ctx.fillRect(PIER_L.x + 36, 566 + i * 17, 60, 3);
 
   /* two clipped bays on the pavement, clear of the glass so they
      frame the shop instead of sitting on top of the diners */
@@ -1046,6 +1142,36 @@ function drawGlazingFrame(ctx, alpha) {
   ctx.globalAlpha *= alpha;
   const { x, y, w, h } = GLASS;
 
+  /* the glass itself: a cool sky tint down the top, two soft
+     diagonal reflections, and a faint bloom where the interior is
+     brightest. Without these the openings read as holes rather
+     than as glazing. */
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  const tint = ctx.createLinearGradient(0, y, 0, y + h);
+  tint.addColorStop(0, "rgba(150,178,212,0.07)");
+  tint.addColorStop(0.3, "rgba(150,178,212,0.015)");
+  tint.addColorStop(1, "rgba(150,178,212,0)");
+  ctx.fillStyle = tint;
+  ctx.fillRect(x, y, w, h);
+  for (const [sx, sw, sa] of [[-250, 190, 0.075], [40, 96, 0.05], [700, 150, 0.06], [1010, 80, 0.042]]) {
+    const g = ctx.createLinearGradient(x + sx, y, x + sx + sw, y + h);
+    g.addColorStop(0, "rgba(255,255,255,0)");
+    g.addColorStop(0.5, `rgba(236,245,255,${sa})`);
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x + sx, y + h);
+    ctx.lineTo(x + sx + sw, y + h);
+    ctx.lineTo(x + sx + sw + 330, y);
+    ctx.lineTo(x + sx + 330, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
   /* head beam */
   ctx.fillStyle = JOIN_L;
   ctx.fillRect(x - 14, y - 20, w + 28, 22);
@@ -1060,6 +1186,13 @@ function drawGlazingFrame(ctx, alpha) {
     ctx.fillRect(mx + pw / 2 - 3, y, 3, h);
   };
   for (const mx of mullions) post(mx, mx === x || mx === x + w ? 18 : 13);
+
+  /* divided lights in the transom band */
+  ctx.fillStyle = JOIN_L;
+  for (const [a, b] of [[x, DOOR.x], [DOOR.x + DOOR.w, x + w]]) {
+    const n = 3;
+    for (let i = 1; i < n; i++) ctx.fillRect(a + ((b - a) * i) / n - 4, y, 8, TRANSOM - y);
+  }
 
   /* the transom line */
   ctx.fillStyle = JOIN_L;
@@ -1090,6 +1223,16 @@ function drawGlazingFrame(ctx, alpha) {
   ctx.fill();
   ctx.fillStyle = BRASS_L;
   ctx.fillRect(dr - 31, TRANSOM + 64, 3, 138);
+
+  ctx.save();
+  ctx.fillStyle = BRASS_L;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "15px KhangSans";
+  const tmid = (y + TRANSOM) / 2;
+  tracked(ctx, "CHINESE · DIM SUM", (x + DOOR.x) / 2, tmid, 6);
+  tracked(ctx, "OPEN 11 — 23 DAILY", (DOOR.x + DOOR.w + x + w) / 2, tmid, 6);
+  ctx.restore();
 
   /* base rail */
   ctx.fillStyle = JOIN_L;
