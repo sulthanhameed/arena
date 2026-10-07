@@ -12,37 +12,41 @@ the picture washes to white and the brand lockup resolves on its own
 card: the green roundel carrying 康, then KHANG, a jade hairline and
 CHINESE · DIMSUM, the same mark the site wears in its header.
 
-The guests are **drawn figures in profile**, facing each other
+The guests are **stick figures in profile**, facing each other
 across the table on two chairs, legs and feet in frame — the staging
 of the reference the design came from. One eats with chopsticks, the
 other drinks from a teacup, and around 1.9 s both hands are up at
 once, which is the reference's composition.
 
-They are drawn as **people, not pictograms**. The head is a single
-closed profile path — forehead, brow ridge, nose, lips, chin, jaw —
-and carries a brow, an eye with sclera, iris and upper lid, a
-nostril, a lip and an ear. Hair is a second closed shell that sits
-*proud* of the skull, because a hairline that traces the scalp
-exactly reads as a coloured-in bald head; she wears a bun, he wears
-a fringe that comes down onto the forehead. The head is about 0.18
-of the seated height, which is the real ratio.
+They are drawn as **one colour each, at one weight**: a stroked
+skeleton with round caps and round joins, a ring for the head, and
+nothing filled except her bun and the eye. That restraint is the
+whole style — a stick figure stops reading as one the moment some
+parts are strokes and others are filled shapes, so there are no
+gradients, no shading and no second tone anywhere on the body. A
+muted wine and a deep teal sit on cream without shouting and read
+apart at a glance across the table.
 
-Nothing is a flat fill. The torso runs a horizontal
-`topSh → top → topHi` gradient, the face a diagonal
-`skinSh → skin → skinHi` clipped to the profile, and every limb is a
-`taper()` — a quad that narrows from joint to joint with the joints
-rounded off, shaded by a gradient *across* its width. The two things
-that look wrong and were tried: a constant-width stroke, which reads
-as a tube, and a second darker shape laid on top, which reads as a
-sausage with a stripe painted down it. Only a gradient across the
-limb reads as an arm. The far leg and far arm sit at 0.72 alpha so
-the body has depth in a flat profile.
+The eye is a single dot, and it is not decoration. A bare ring gives
+no clue which way a figure faces, and the entire staging is the two
+of them turned towards each other; the dot and her bun are what fix
+the profile. Props follow the same rule — the cup is a stroked
+outline, the chopsticks are two lines.
 
-Faces earn the beats that pose alone used to carry, but pose still
-does the work: the lift, the tip of the cup, the chew. The camera's
-bottom edge is pinned to the floor line so the whole tableau —
-chairs, legs, feet — sits in frame the way the reference stages it,
-and never crops to a pair of talking heads.
+Every beat is pose, because there is no face to carry one: the lift,
+the tip of the cup, the chew. The prop tips are solved against the
+head, not eyeballed — the chopsticks straddle the hand so the tip
+lands on the ring's front edge rather than halfway across the skull,
+and the cup rim meets the same point.
+
+**The camera is one slow pull-back.** It opens tight enough that the
+outer chair posts are out of frame — close on the two of them and
+the table — and widens over 5.3 s to the whole tableau, chairs and
+feet included, landing just as the white wash begins. The scale is
+interpolated exponentially rather than linearly: a zoom that steps
+evenly through scale reads as decelerating, and this has to feel
+like a single gesture. The camera's bottom edge stays pinned near
+the floor line so the move never crops to a pair of talking heads.
 
 The film is eight seconds on a flat cream field: no restaurant, no
 room, nothing but the table and the two of them. He eats, she
