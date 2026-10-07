@@ -28,7 +28,7 @@ const { createCanvas, GlobalFonts } = require("@napi-rs/canvas");
 const W = 1920;
 const H = 1080;
 const FPS = 30;
-const DURATION = 8.0;
+const DURATION = 12.0;
 const OUT = process.argv[2] || "/tmp/vid/frames";
 
 /* ── Palette ─────────────────────────────────────────────────── *
@@ -41,6 +41,17 @@ const PAPER = "#f0e5cd";
 const FLOOR = "#7d5c41";
 const FLOOR_D = "#5f4530";
 const FLOOR_L = "#946f50";
+
+/* The room the pair sit in. Light enough that two coloured
+   silhouettes read against it at any distance — a dark floor eats
+   the feet of the wine figure the moment the camera pulls back. */
+const RM_WALL_T = "#dccdb0";
+const RM_WALL = "#ebe0ca";
+const RM_WALL_D = "#cdbb9b";
+const RM_FLOOR = "#c2a583";
+const RM_FLOOR_D = "#ab8c69";
+const RM_GLASS = "#fbeac7";
+const RM_FRAME = "#bda888";
 
 const WOOD = "#916845";
 const WOOD_D = "#6d4d31";
@@ -73,9 +84,13 @@ const INK_2 = "#232a2e";
 /* Stick figures carry one colour each. They have to read apart at a
    glance across the table and sit on cream without shouting, so the
    pair is a muted wine and a deep teal rather than two primaries. */
+/* One flat colour each, plus a darker tone of the same ink for the
+   far arm and leg. The reference is pure black and lets the limbs
+   merge; at video scale that loses the pose, and a second tone
+   costs nothing because it is still a silhouette. */
 const GUESTS = {
-  w: { ink: "#9d4458", bun: true },
-  m: { ink: "#2d5f6b", bun: false },
+  w: { ink: "#9d4458", inkD: "#7a3344", bun: true },
+  m: { ink: "#2d5f6b", inkD: "#214954", bun: false },
 };
 
 /* ── Geometry ────────────────────────────────────────────────── */
@@ -106,6 +121,27 @@ font("PlayfairDisplay_600SemiBold.ttf", "KhangDisplay");
 font("Manrope_600SemiBold.ttf", "KhangSans");
 
 /* ── Small drawing helpers ───────────────────────────────────── */
+/** A solid limb that tapers from one joint to the next with both
+ *  joints rounded off. Flat fill, no shading — the whole style is
+ *  one colour per figure. */
+function taper(ctx, x1, y1, x2, y2, w1, w2, fill) {
+  const a = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
+  const cx = Math.cos(a);
+  const cy = Math.sin(a);
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  ctx.moveTo(x1 + cx * w1 * 0.5, y1 + cy * w1 * 0.5);
+  ctx.lineTo(x2 + cx * w2 * 0.5, y2 + cy * w2 * 0.5);
+  ctx.lineTo(x2 - cx * w2 * 0.5, y2 - cy * w2 * 0.5);
+  ctx.lineTo(x1 - cx * w1 * 0.5, y1 - cy * w1 * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  circle(ctx, x1, y1, w1 * 0.5);
+  ctx.fill();
+  circle(ctx, x2, y2, w2 * 0.5);
+  ctx.fill();
+}
+
 function limb(ctx, x1, y1, x2, y2, w, colour) {
   ctx.strokeStyle = colour;
   ctx.lineWidth = w;
@@ -198,6 +234,11 @@ function roundel(ctx, cx, cy, r, ring, invert) {
  *  shapes, so the only fills here are the head's bun and the eye.
  *  The pose rig underneath is the same one the drawn figures used:
  *  same shoulder, same hip, same arm solver, same beats. */
+/** The two of them as solid silhouettes — filled bodies with real
+ *  volume: a tapered torso, thick bent limbs, an oval head and no
+ *  face at all. That is the pictogram the reference is drawn in.
+ *  The far arm and leg take the darker ink so the pose survives the
+ *  limbs overlapping, which is the one place pure black fails. */
 function drawFigure(ctx, o) {
   const {
     dir,
@@ -217,11 +258,9 @@ function drawFigure(ctx, o) {
   ctx.save();
   ctx.scale(dir, 1);
 
-  const LW = 16;
-  const R = 42;
-  const SHO = { x: 12, y: -342 + breath };
-  const HIP = { x: -6, y: -170 };
-  const HEADC = { x: 20, y: -408 + breath + nod };
+  const SHO = { x: 10, y: -344 + breath };
+  const HIP = { x: -8, y: -170 };
+  const HEADC = { x: 20, y: -404 + breath + nod };
 
   /* ── chair ─────────────────────────────────────────────── */
   ctx.fillStyle = WOOD_D;
@@ -241,46 +280,34 @@ function drawFigure(ctx, o) {
   ctx.fillStyle = WOOD_L;
   ctx.fillRect(-128, -166, 168, 3);
 
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = pal.ink;
-  ctx.lineWidth = LW;
+  /* ── far leg and far arm, the darker ink ───────────────── */
+  taper(ctx, HIP.x, HIP.y, 68, -164, 52, 42, pal.inkD);
+  taper(ctx, 68, -164, 60, -20, 40, 29, pal.inkD);
+  taper(ctx, 60, -20, 104, -13, 27, 21, pal.inkD);
+  taper(ctx, SHO.x - 6, SHO.y + 14, 74, -256, 31, 25, pal.inkD);
+  taper(ctx, 74, -256, 132, -240, 24, 19, pal.inkD);
+  ctx.fillStyle = pal.inkD;
+  circle(ctx, 134, -239, 12);
+  ctx.fill();
 
-  const bone = (...pts) => {
-    ctx.beginPath();
-    ctx.moveTo(pts[0], pts[1]);
-    for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
-    ctx.stroke();
-  };
-
-  /* ── far side, knocked back so the near side reads in front ── */
-  ctx.save();
-  ctx.globalAlpha *= 0.32;
-  bone(HIP.x, HIP.y, 64, -162, 56, -16, 100, -10);
-  bone(SHO.x - 4, SHO.y + 8, 76, -258, 132, -240);
-  ctx.restore();
-
-  /* ── spine, near leg, resting arm ──────────────────────── */
-  bone(HIP.x, HIP.y, SHO.x, SHO.y, HEADC.x, HEADC.y + R - 6);
-  bone(HIP.x, HIP.y, 82, -166, 74, -16, 120, -10);
-  bone(SHO.x, SHO.y + 6, 72, -254, 136, -238);
+  /* ── torso, near leg, neck ─────────────────────────────── */
+  taper(ctx, HIP.x, HIP.y, SHO.x, SHO.y, 76, 90, pal.ink);
+  taper(ctx, HIP.x, HIP.y, 86, -166, 54, 44, pal.ink);
+  taper(ctx, 86, -166, 78, -20, 42, 30, pal.ink);
+  taper(ctx, 78, -20, 124, -12, 28, 22, pal.ink);
+  taper(ctx, SHO.x, SHO.y, HEADC.x, HEADC.y + 20, 34, 28, pal.ink);
 
   /* ── head ──────────────────────────────────────────────── */
   ctx.save();
   ctx.translate(HEADC.x, HEADC.y);
   ctx.rotate(tilt);
+  ctx.fillStyle = pal.ink;
   if (bun) {
-    ctx.fillStyle = pal.ink;
-    circle(ctx, -R - 9, -23, 15);
+    circle(ctx, -27, -23, 15);
     ctx.fill();
   }
-  ctx.lineWidth = LW;
-  circle(ctx, 0, 0, R - LW / 2);
-  ctx.stroke();
-  /* A bare circle gives no clue which way they face, and the whole
-     staging is the two of them turned towards each other. */
-  ctx.fillStyle = pal.ink;
-  circle(ctx, 15, -9, 5.5);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 29, 33, -0.09, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
@@ -289,7 +316,7 @@ function drawFigure(ctx, o) {
   const g = clamp01(gesture);
   const REST = { ex: 82, ey: -262, hx: 138, hy: -244 };
   const MOUTH = cup
-    ? { ex: 96, ey: -296, hx: HEADC.x + 66, hy: HEADC.y + 50 }
+    ? { ex: 96, ey: -296, hx: HEADC.x + 58, hy: HEADC.y + 42 }
     : { ex: 100, ey: -306, hx: HEADC.x + 58, hy: HEADC.y + 36 };
   const GEST = { ex: 52, ey: -288, hx: 104, hy: -368 };
   const TOAST = { ex: 94, ey: -320, hx: 154, hy: -372 };
@@ -305,36 +332,41 @@ function drawFigure(ctx, o) {
   const ey = bEy + u * (MOUTH.ey - bEy) + g * (GEST.ey - REST.ey);
   const hx = bHx + u * (MOUTH.hx - bHx) + g * (GEST.hx - REST.hx);
   const hy = bHy + u * (MOUTH.hy - bHy) + g * (GEST.hy - REST.hy);
-  ctx.strokeStyle = pal.ink;
-  ctx.lineWidth = LW;
-  bone(SHO.x, SHO.y + 6, ex, ey, hx, hy);
+  taper(ctx, SHO.x, SHO.y + 8, ex, ey, 33, 26, pal.ink);
+  taper(ctx, ex, ey, hx, hy, 25, 20, pal.ink);
+  ctx.fillStyle = pal.ink;
+  circle(ctx, hx, hy, 12);
+  ctx.fill();
 
   if (cup) {
     const ang = lerp(-1.62, -2.48, u);
-    const reach = lerp(2, 14, u);
+    const reach = lerp(2, 12, u);
     ctx.save();
     ctx.translate(hx + reach * Math.cos(ang), hy + reach * Math.sin(ang));
     ctx.rotate(ang);
-    ctx.fillStyle = CREAM;
-    rrect(ctx, -4, -13, 36, 26, 5);
+    ctx.fillStyle = CELADON;
+    rrect(ctx, -5, -13, 37, 26, 5);
     ctx.fill();
-    ctx.strokeStyle = pal.ink;
-    ctx.lineWidth = 7;
-    rrect(ctx, -4, -13, 36, 26, 5);
-    ctx.stroke();
+    ctx.fillStyle = "#b9c3b2";
+    rrect(ctx, 26, -13, 6, 26, 3);
+    ctx.fill();
     ctx.restore();
   }
 
   if (sticks) {
-    const ang = lerp(-2.95, -2.48, u);
-    const reach = lerp(52, 35, u);
+    /* Solved against the head, not eyeballed: the sticks straddle
+       the hand so the tip lands on the mouth rather than halfway
+       across the skull. */
+    const ang = lerp(-2.95, -2.49, u);
+    const reach = lerp(52, 43, u);
     const tail = 24;
     const ca = Math.cos(ang);
     const sa = Math.sin(ang);
     const ox = -sa * 6;
     const oy = ca * 6;
-    ctx.strokeStyle = pal.ink;
+    ctx.strokeStyle = "#8a6334";
     ctx.lineWidth = 6;
+    ctx.lineCap = "round";
     for (const k of [-1, 1]) {
       ctx.beginPath();
       ctx.moveTo(hx - tail * ca + ox * k, hy - tail * sa + oy * k);
@@ -345,132 +377,292 @@ function drawFigure(ctx, o) {
       ctx.fillStyle = CREAM;
       circle(ctx, hx + reach * ca, hy + reach * sa, 13 * holding);
       ctx.fill();
-      ctx.lineWidth = 5;
-      ctx.stroke();
     }
   }
 
   ctx.restore();
 }
 
-function drawTable(ctx, t) {
+/** One ribbon of steam. Fixed phase per source so it never crawls
+ *  between frames, strength drives both opacity and height. */
+function steam(ctx, x0, y0, t, strength, seedn) {
+  if (strength <= 0.01) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,252,244,0.95)";
+  ctx.lineCap = "round";
+  for (let i = 0; i < 3; i++) {
+    const ph = t * 0.52 + i * 0.47 + seedn;
+    const rise = ph % 1;
+    const sx = x0 + (i - 1) * 15;
+    ctx.lineWidth = 3.4;
+    ctx.globalAlpha = (1 - rise) * 0.5 * Math.min(1, rise * 5) * strength;
+    ctx.beginPath();
+    ctx.moveTo(sx, y0);
+    for (let k = 0; k <= 1.001; k += 0.25) {
+      ctx.lineTo(
+        sx + Math.sin(k * 3.1 + ph * 3.4) * (8 + k * 12) * strength,
+        y0 - k * (70 + rise * 44) * strength,
+      );
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** The table and everything on it. `lidU` lifts the lid off the
+ *  steamer stack, `eaten` is how many dumplings have left the
+ *  plate — both are animated, so the food on the table changes
+ *  over the film instead of sitting there as a still life. */
+function drawTable(ctx, t, lidU = 0, eaten = 0) {
   const TOP = -232;
+  const HALF = 230;
 
   ctx.fillStyle = WOOD;
-  rrect(ctx, -200, TOP, 400, 22, 7);
+  rrect(ctx, -HALF, TOP, HALF * 2, 22, 7);
   ctx.fill();
   ctx.fillStyle = WOOD_L;
-  ctx.fillRect(-200, TOP, 400, 5);
+  ctx.fillRect(-HALF, TOP, HALF * 2, 5);
   ctx.fillStyle = WOOD_D;
-  ctx.fillRect(-200, TOP + 17, 400, 5);
-  limb(ctx, -152, TOP + 22, -144, -6, 14, WOOD_D);
-  limb(ctx, 152, TOP + 22, 144, -6, 14, WOOD_D);
+  ctx.fillRect(-HALF, TOP + 17, HALF * 2, 5);
+  ctx.fillStyle = WOOD_D;
+  ctx.fillRect(-182, TOP + 22, 364, 8);
+  limb(ctx, -176, TOP + 28, -168, -6, 14, WOOD_D);
+  limb(ctx, 176, TOP + 28, 168, -6, 14, WOOD_D);
 
-  /* bamboo steamers */
-  for (const i of [0, 1]) {
-    const y = TOP - 30 - i * 26;
-    ctx.fillStyle = i ? "#d7ab6a" : "#c99a5b";
-    rrect(ctx, -34 + i * 4, y, 118 - i * 8, 30 - i * 2, 6);
-    ctx.fill();
-    ctx.strokeStyle = "#ab7f3e";
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(-28 + i * 4, y + 14);
-    ctx.lineTo(80 - i * 4, y + 14);
-    ctx.stroke();
-  }
-  ctx.fillStyle = "#e0b876";
-  rrect(ctx, -32, TOP - 64, 114, 12, 5);
-  ctx.fill();
-  ctx.fillStyle = "#ab7f3e";
-  circle(ctx, 25, TOP - 66, 6);
-  ctx.fill();
-
-  /* a plate of dumplings */
-  ctx.fillStyle = CELADON;
-  ctx.beginPath();
-  ctx.ellipse(-18, TOP - 4, 46, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-  for (const dx of [-36, -18, 0]) {
-    ctx.fillStyle = CREAM;
-    ctx.beginPath();
-    ctx.ellipse(dx, TOP - 11, 12, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#ddc9a6";
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(dx, TOP - 19);
-    ctx.lineTo(dx, TOP - 6);
-    ctx.stroke();
-  }
-
-  /* red clay teapot */
+  /* ── red clay teapot ───────────────────────────────────── */
   ctx.fillStyle = RED_D;
-  circle(ctx, -120, TOP - 26, 28);
+  circle(ctx, -176, TOP - 26, 28);
   ctx.fill();
   ctx.fillStyle = RED;
   ctx.beginPath();
-  ctx.arc(-120, TOP - 26, 28, Math.PI * 1.15, Math.PI * 1.95);
+  ctx.arc(-176, TOP - 26, 28, Math.PI * 1.15, Math.PI * 1.95);
   ctx.closePath();
   ctx.fill();
   ctx.fillStyle = RED_D;
-  rrect(ctx, -129, TOP - 62, 19, 11, 4);
+  rrect(ctx, -185, TOP - 62, 19, 11, 4);
   ctx.fill();
   ctx.strokeStyle = RED_D;
   ctx.lineWidth = 8;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(-145, TOP - 34);
-  ctx.quadraticCurveTo(-172, TOP - 30, -168, TOP - 8);
+  ctx.moveTo(-201, TOP - 34);
+  ctx.quadraticCurveTo(-228, TOP - 30, -224, TOP - 8);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(-98, TOP - 38);
-  ctx.quadraticCurveTo(-75, TOP - 32, -96, TOP - 14);
+  ctx.moveTo(-154, TOP - 38);
+  ctx.quadraticCurveTo(-131, TOP - 32, -152, TOP - 14);
   ctx.stroke();
 
-  /* cups */
-  for (const cx of [120, -66]) {
-    ctx.fillStyle = CELADON;
-    rrect(ctx, cx - 15, TOP - 17, 30, 17, 5);
-    ctx.fill();
-  }
+  /* ── a bowl of noodles, lightly steaming ───────────────── */
+  ctx.fillStyle = CELADON;
+  ctx.beginPath();
+  ctx.moveTo(-148, TOP - 36);
+  ctx.quadraticCurveTo(-118, TOP + 4, -88, TOP - 36);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#edd9a8";
+  ctx.beginPath();
+  ctx.ellipse(-118, TOP - 36, 30, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#c3cebc";
+  ctx.beginPath();
+  ctx.ellipse(-118, TOP - 38, 30, 6, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
 
-  /* steam */
-  ctx.strokeStyle = "rgba(255,252,244,0.9)";
-  ctx.lineWidth = 3.6;
-  ctx.lineCap = "round";
-  for (let i = 0; i < 3; i++) {
-    const ph = t * 0.85 + i * 0.47;
-    const rise = ph % 1;
-    const x0 = 2 + i * 32;
-    const y0 = TOP - 68;
-    ctx.globalAlpha = (1 - rise) * 0.5 * Math.min(1, rise * 5);
+  /* ── a single small steamer ────────────────────────────── */
+  ctx.fillStyle = "#c99a5b";
+  rrect(ctx, -88, TOP - 28, 68, 28, 6);
+  ctx.fill();
+  ctx.fillStyle = "#e0b876";
+  rrect(ctx, -91, TOP - 40, 74, 13, 5);
+  ctx.fill();
+  ctx.fillStyle = "#ab7f3e";
+  circle(ctx, -54, TOP - 42, 5);
+  ctx.fill();
+
+  /* ── the stack, whose lid comes off ────────────────────── */
+  for (const i of [0, 1]) {
+    const y = TOP - 30 - i * 27;
+    ctx.fillStyle = i ? "#d7ab6a" : "#c99a5b";
+    rrect(ctx, -17 + i * 3, y, 92 - i * 6, 31 - i * 2, 6);
+    ctx.fill();
+    ctx.strokeStyle = "#ab7f3e";
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    for (let s = 0; s <= 1.001; s += 0.25) {
-      ctx.lineTo(
-        x0 + Math.sin(s * 3.1 + ph * 4.2) * (9 + s * 13),
-        y0 - s * (86 + rise * 54),
-      );
-    }
+    ctx.moveTo(-11 + i * 3, y + 15);
+    ctx.lineTo(69 - i * 3, y + 15);
     ctx.stroke();
   }
+  /* dumplings sitting in the open top basket */
+  if (lidU > 0.12) {
+    ctx.save();
+    ctx.globalAlpha = clamp01((lidU - 0.12) / 0.3);
+    for (const dx of [8, 29, 50]) {
+      ctx.fillStyle = CREAM;
+      ctx.beginPath();
+      ctx.ellipse(dx, TOP - 64, 11, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#e3d2b2";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(dx, TOP - 71);
+      ctx.lineTo(dx, TOP - 59);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* the lid itself, rising and tipping as it comes away */
+  ctx.save();
+  ctx.translate(31 + lidU * 10, TOP - 68 - lidU * 50);
+  ctx.rotate(-lidU * 0.22);
+  ctx.fillStyle = "#e0b876";
+  rrect(ctx, -46, -8, 92, 15, 5);
+  ctx.fill();
+  ctx.fillStyle = "#ab7f3e";
+  circle(ctx, 0, -11, 6);
+  ctx.fill();
+  ctx.restore();
+
+  /* ── sauce dish ────────────────────────────────────────── */
+  ctx.fillStyle = CELADON;
+  ctx.beginPath();
+  ctx.ellipse(108, TOP - 5, 19, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#8c4a2c";
+  ctx.beginPath();
+  ctx.ellipse(108, TOP - 6, 13, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* ── his plate: dumplings leave it as he eats ──────────── */
+  ctx.fillStyle = CELADON;
+  ctx.beginPath();
+  ctx.ellipse(168, TOP - 4, 44, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const plate = [146, 166, 186, 156, 176];
+  for (let i = 0; i < plate.length; i++) {
+    if (i < eaten) continue;
+    const dx = plate[i];
+    const dy = i > 2 ? TOP - 19 : TOP - 11;
+    ctx.fillStyle = CREAM;
+    ctx.beginPath();
+    ctx.ellipse(dx, dy, 12, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#ddc9a6";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(dx, dy - 8);
+    ctx.lineTo(dx, dy + 5);
+    ctx.stroke();
+  }
+
+  /* ── steam: the stack bursts when the lid lifts ────────── */
+  steam(ctx, 31, TOP - 76, t, 0.45 + lidU * 1.15, 0);
+  steam(ctx, -54, TOP - 44, t, 0.4, 1.7);
+  steam(ctx, -118, TOP - 42, t, 0.5, 3.1);
   ctx.globalAlpha = 1;
 }
 
-/* ── The dining room ─────────────────────────────────────────── */
-/** Nothing but the table and the two of them on a flat field. The
- *  restaurant used to be built around this and is gone, so the pair
- *  have to hold the whole film on their own. */
-function drawScene(ctx, t) {
-  drawTable(ctx, t);
+/* ── The room ────────────────────────────────────────────────── */
+/** The restaurant comes back as a space, not a building: a wall, a
+ *  floor, two lit screens, two lanterns and a couple of tables far
+ *  enough back to be atmosphere. It is drawn in the same flat
+ *  language as the figures, and it is deliberately light — a dark
+ *  floor swallows the wine figure's feet the moment the camera
+ *  pulls out far enough to show them. */
+function drawRoom(ctx, t) {
+  const wg = ctx.createLinearGradient(0, -1000, 0, 0);
+  wg.addColorStop(0, RM_WALL_T);
+  wg.addColorStop(0.58, RM_WALL);
+  wg.addColorStop(1, "#e0d3b9");
+  ctx.fillStyle = wg;
+  ctx.fillRect(-1700, -1200, 3400, 1200);
 
-  /* ── choreography ───────────────────────────────────────────
-     With no faces to act with, the talking has to live in the
-     hands and the head: the left guest gestures and tilts while
-     she speaks, the right guest lifts, bites, and nods as he
-     chews. Both read at a glance, which is the whole point of
-     working in pictograms. */
+  /* dado rail, well above the heads so it never cuts through one */
+  ctx.fillStyle = RM_WALL_D;
+  ctx.fillRect(-1700, -492, 3400, 7);
+
+  /* lit screens, the only light source in the room */
+  for (const wx of [-700, 700]) {
+    ctx.fillStyle = RM_FRAME;
+    rrect(ctx, wx - 126, -712, 252, 410, 9);
+    ctx.fill();
+    const pg = ctx.createLinearGradient(0, -700, 0, -314);
+    pg.addColorStop(0, "#fdf0d6");
+    pg.addColorStop(1, RM_GLASS);
+    ctx.fillStyle = pg;
+    rrect(ctx, wx - 113, -699, 226, 384, 6);
+    ctx.fill();
+    ctx.fillStyle = RM_FRAME;
+    ctx.fillRect(wx - 4, -699, 8, 384);
+    ctx.fillRect(wx - 113, -519, 226, 8);
+    ctx.save();
+    const sg = ctx.createRadialGradient(wx, -507, 20, wx, -507, 300);
+    sg.addColorStop(0, "rgba(255,226,166,0.3)");
+    sg.addColorStop(1, "rgba(255,226,166,0)");
+    ctx.fillStyle = sg;
+    ctx.fillRect(wx - 320, -820, 640, 640);
+    ctx.restore();
+  }
+
+  /* two lanterns, off to the sides: the centre has to stay clear
+     for the steam coming off the table */
+  for (const lx of [-468, 468]) {
+    ctx.strokeStyle = "#8d6a44";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(lx, -1200);
+    ctx.lineTo(lx, -742);
+    ctx.stroke();
+    ctx.fillStyle = "#6d4d31";
+    rrect(ctx, lx - 16, -748, 32, 12, 3);
+    ctx.fill();
+    ctx.fillStyle = RED_D;
+    ctx.beginPath();
+    ctx.ellipse(lx, -700, 44, 38, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = RED;
+    ctx.beginPath();
+    ctx.ellipse(lx - 7, -704, 33, 32, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#6d4d31";
+    rrect(ctx, lx - 16, -668, 32, 10, 3);
+    ctx.fill();
+    ctx.strokeStyle = GLOW_D;
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(lx, -658);
+    ctx.lineTo(lx, -622);
+    ctx.stroke();
+    const lg = ctx.createRadialGradient(lx, -700, 20, lx, -700, 190);
+    lg.addColorStop(0, "rgba(243,189,99,0.26)");
+    lg.addColorStop(1, "rgba(243,189,99,0)");
+    ctx.fillStyle = lg;
+    ctx.fillRect(lx - 200, -900, 400, 400);
+  }
+
+  /* floor */
+  ctx.fillStyle = RM_FLOOR;
+  ctx.fillRect(-1700, 0, 3400, 700);
+  ctx.fillStyle = RM_WALL_D;
+  ctx.fillRect(-1700, -20, 3400, 20);
+  ctx.fillStyle = "#b39070";
+  ctx.fillRect(-1700, 0, 3400, 5);
+  const fg = ctx.createLinearGradient(0, 0, 0, 420);
+  fg.addColorStop(0, "rgba(255,240,210,0.22)");
+  fg.addColorStop(1, "rgba(255,240,210,0)");
+  ctx.fillStyle = fg;
+  ctx.fillRect(-1700, 0, 3400, 420);
+  ctx.fillStyle = RM_FLOOR_D;
+  ctx.fillRect(-1700, 330, 3400, 400);
+}
+
+/* ── The dining room ─────────────────────────────────────────── */
+/** Room, table, then the two of them. Twelve seconds now, so every
+ *  beat has roughly half again as long to play as it used to. */
+function drawScene(ctx, t) {
+  drawRoom(ctx, t);
+
   /* a lift-hold-lower envelope, reused for both guests */
   const arc = (a, b, c, d) => {
     if (t >= a && t < b) return seg(t, a, b, easeInOut);
@@ -479,52 +671,50 @@ function drawScene(ctx, t) {
     return 0;
   };
 
-  /* Act one has no room to carry it, so everything has to come
-     from the two of them: he eats, she answers, she drinks, he sets
-     down his chopsticks, they raise their cups together, drink to
-     it, and she laughs. */
-  const liftR = arc(0.25, 0.85, 1.15, 1.8); // he eats
-  const gestR = arc(1.95, 2.15, 2.55, 2.85); // he says something
-  const liftL = arc(1.6, 2.1, 2.4, 2.9); // she drinks
-  const gestL1 = arc(1.0, 1.22, 1.72, 2.02); // she answers him
-  const gestL2 = arc(5.15, 5.45, 5.95, 6.3); // still talking as we leave
-  const toastW = arc(2.95, 3.45, 4.25, 4.8); // cups up, together
-  const sipBoth = arc(3.65, 3.95, 4.15, 4.5); // and a drink to it
+  /* The food leads: the lid comes off the stack and the steam
+     bursts before anybody reaches for anything. */
+  const lidU = arc(0.5, 1.4, 2.5, 3.2);
 
-  const wobble = 0.84 + 0.16 * Math.sin(t * 3.4);
+  const liftR = arc(1.8, 2.7, 3.2, 4.1); // he eats
+  const gestL1 = arc(3.4, 3.9, 4.7, 5.2); // she answers
+  const liftL = arc(4.6, 5.3, 5.9, 6.6); // she drinks
+  const gestR = arc(5.4, 5.8, 6.4, 6.9); // he says something
+  const toastW = arc(6.7, 7.4, 8.3, 8.9); // cups up, together
+  const sipBoth = arc(7.6, 8.0, 8.3, 8.7); // and a drink to it
+  const gestL2 = arc(8.4, 8.7, 8.9, 9.1); // still talking as we leave
+
+  const atMouth = 2.7;
+  const biteEnd = 3.2;
+  const eaten = t > atMouth ? 1 : 0;
+
+  drawTable(ctx, t, lidU, eaten);
+
+  const wobble = 0.84 + 0.16 * Math.sin(t * 2.2);
   const gestureL = (gestL1 + gestL2) * wobble;
   const gestureR = gestR * wobble;
 
-  /* the laugh: head back, then a shudder. On a faceless head it is
-     the only way to play one. */
-  /* the laugh: a small lean back and settle, not a shudder */
   const laughU =
-    t > 4.28 && t < 5.1 ? Math.sin(((t - 4.28) / 0.82) * Math.PI) : 0;
+    t > 7.9 && t < 8.8 ? Math.sin(((t - 7.9) / 0.9) * Math.PI) : 0;
 
-  const atMouth = 0.85;
-  const biteEnd = 1.15;
-
-  /* the chew: a small, insistent nod, which is how a faceless head
-     tells you there is food in it */
-  const chewing = t > biteEnd && t < biteEnd + 1.5;
+  const chewing = t > biteEnd && t < biteEnd + 1.6;
   const nodR =
-    (chewing ? Math.sin((t - biteEnd) * 9.2) * 3.0 : Math.sin(t * 1.9) * 1.0) +
-    laughU * Math.sin(t * 9.5) * 0.9;
+    (chewing ? Math.sin((t - biteEnd) * 6.4) * 3.0 : Math.sin(t * 1.3) * 1.0) +
+    laughU * Math.sin(t * 6.2) * 0.9;
   const holdingR =
-    t < atMouth - 0.02 ? (t > 0.12 ? 1 : 0)
-      : clamp01(1 - (t - (atMouth - 0.02)) / 0.16);
+    t < atMouth - 0.02 ? (t > 1.9 ? 1 : 0)
+      : clamp01(1 - (t - (atMouth - 0.02)) / 0.2);
 
   const tiltL =
-    Math.sin(t * 1.6) * 0.014 +
-    (gestL1 + gestL2) * Math.sin(t * 3.6) * 0.026 -
+    Math.sin(t * 1.1) * 0.014 +
+    (gestL1 + gestL2) * Math.sin(t * 2.4) * 0.026 -
     laughU * 0.075;
   const nodL =
-    Math.sin(t * 1.9) * 1.0 - laughU * 3.2 + laughU * Math.sin(t * 10) * 1.0;
+    Math.sin(t * 1.3) * 1.0 - laughU * 3.2 + laughU * Math.sin(t * 6.6) * 1.0;
 
-  const breathe = (ph) => Math.sin(t * 1.45 + ph) * 2.1;
+  const breathe = (ph) => Math.sin(t * 1.0 + ph) * 2.1;
 
   ctx.save();
-  ctx.translate(-336, 0);
+  ctx.translate(-366, 0);
   drawFigure(ctx, {
     dir: 1,
     pal: GUESTS.w,
@@ -540,33 +730,29 @@ function drawScene(ctx, t) {
   ctx.restore();
 
   ctx.save();
-  ctx.translate(336, 0);
+  ctx.translate(366, 0);
   drawFigure(ctx, {
     dir: -1,
     pal: GUESTS.m,
     /* he puts the chopsticks down to pick his cup up for the toast */
-    sticks: t < 2.78,
-    cup: t >= 2.78,
+    sticks: t < 6.45,
+    cup: t >= 6.45,
     lift: Math.max(liftR, sipBoth),
     toast: toastW,
     gesture: gestureR,
     nod: nodR,
-    tilt: Math.sin(t * 1.4 + 2) * 0.012 - liftR * 0.025 + laughU * 0.055,
+    tilt: Math.sin(t * 1.0 + 2) * 0.012 - liftR * 0.025 + laughU * 0.055,
     breath: breathe(2.1),
     holding: holdingR,
   });
   ctx.restore();
 }
 
-/* ── The end card ────────────────────────────────────────────── *
- * The picture washes to white and the mark is left on its own —
- * no building behind it, nothing competing with it. Drawn in
- * screen space, because it is no longer part of the world.        */
 function drawEndCard(ctx, t) {
   const cx = W / 2;
 
   /* roundel */
-  const aMark = seg(t, 5.9, 6.5, easeOut);
+  const aMark = seg(t, 9.55, 10.25, easeOut);
   if (aMark > 0) {
     ctx.save();
     ctx.globalAlpha = aMark;
@@ -581,7 +767,7 @@ function drawEndCard(ctx, t) {
   }
 
   /* KHANG */
-  const aName = seg(t, 6.55, 7.2);
+  const aName = seg(t, 10.3, 11.0);
   if (aName > 0) {
     ctx.save();
     ctx.fillStyle = GREEN_D;
@@ -595,7 +781,7 @@ function drawEndCard(ctx, t) {
   }
 
   /* jade hairline */
-  const aRule = seg(t, 7.15, 7.45);
+  const aRule = seg(t, 10.95, 11.25);
   if (aRule > 0) {
     ctx.save();
     ctx.globalAlpha = aRule;
@@ -610,7 +796,7 @@ function drawEndCard(ctx, t) {
   }
 
   /* descriptor */
-  const aSub = seg(t, 7.3, 7.68);
+  const aSub = seg(t, 11.1, 11.5);
   if (aSub > 0) {
     ctx.save();
     ctx.globalAlpha = aSub;
@@ -627,15 +813,16 @@ function drawEndCard(ctx, t) {
  * Scale 4.3 is a two-shot across the table; scale 1 frames the
  * whole shopfront. One continuous move, held at each end.          */
 function camera(t) {
-  /* Open tight on the two of them at the table — the outer chair
-     posts are out of frame — and pull back over the whole tableau.
-     expLerp, not lerp: a zoom that steps evenly through scale reads
-     as decelerating, and the move has to feel like one gesture. */
-  const u = seg(t, 0, 5.3, easeInOut);
+  /* Open tight on the pair and the table — no floor, no lanterns,
+     nothing but the two of them — and pull all the way back to the
+     room over 8.9s. expLerp, not lerp: a zoom that steps evenly
+     through scale reads as decelerating, and this has to land as
+     one continuous move. */
+  const u = seg(t, 0, 8.9, easeInOut);
   return {
-    scale: expLerp(5.6, 3.85, u),
-    cx: 960 + Math.sin(t * 0.4) * 1.5,
-    cy: lerp(752, 783, u),
+    scale: expLerp(5.0, 2.72, u),
+    cx: 960 + Math.sin(t * 0.26) * 1.5,
+    cy: lerp(762, 757, u),
   };
 }
 
@@ -691,14 +878,14 @@ function renderFrame(ctx, t, frame) {
   }
   ctx.restore();
 
-  const wash = seg(t, 5.3, 5.95, easeInOut);
+  const wash = seg(t, 8.9, 9.6, easeInOut);
   if (wash > 0) {
     ctx.fillStyle = `rgba(255,255,255,${wash})`;
     ctx.fillRect(0, 0, W, H);
   }
-  if (t >= 5.85) drawEndCard(ctx, t);
+  if (t >= 9.5) drawEndCard(ctx, t);
 
-  const fade = 1 - seg(t, 0, 0.42, (u) => u);
+  const fade = 1 - seg(t, 0, 0.5, (u) => u);
   if (fade > 0) {
     ctx.fillStyle = `rgba(0,0,0,${fade})`;
     ctx.fillRect(0, 0, W, H);

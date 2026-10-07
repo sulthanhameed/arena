@@ -47,8 +47,8 @@ const FILM_POSTER = "/intro/poster.jpg";
 /** Length of the film, and the moment the hand-over begins. The exit
  *  overlaps the last held beat on the sign, so the site arrives while
  *  the logo is still up rather than after a dead pause. */
-const FILM_MS = 8000;
-const EXIT_AT = 7700;
+const FILM_MS = 12000;
+const EXIT_AT = 11700;
 const EXIT_MS = 900;
 
 /** If the first frame cannot be decoded and playing by now, the film

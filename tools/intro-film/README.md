@@ -12,43 +12,53 @@ the picture washes to white and the brand lockup resolves on its own
 card: the green roundel carrying 康, then KHANG, a jade hairline and
 CHINESE · DIMSUM, the same mark the site wears in its header.
 
-The guests are **stick figures in profile**, facing each other
-across the table on two chairs, legs and feet in frame — the staging
-of the reference the design came from. One eats with chopsticks, the
-other drinks from a teacup, and around 1.9 s both hands are up at
-once, which is the reference's composition.
+The guests are **solid silhouettes in profile**, facing each other
+across the table on two chairs, legs and feet in frame. They are
+filled bodies with real volume — a torso that tapers from shoulder
+to hip, thick bent limbs with rounded joints, an oval head and no
+face at all — which is the pictogram the reference is drawn in.
+Not thin line figures: that was the previous cut and it is not what
+the reference shows.
 
-They are drawn as **one colour each, at one weight**: a stroked
-skeleton with round caps and round joins, a ring for the head, and
-nothing filled except her bun and the eye. That restraint is the
-whole style — a stick figure stops reading as one the moment some
-parts are strokes and others are filled shapes, so there are no
-gradients, no shading and no second tone anywhere on the body. A
-muted wine and a deep teal sit on cream without shouting and read
-apart at a glance across the table.
+Flat colour only, one per figure: a muted wine and a deep teal.
+The far arm and leg take a darker tone of the same ink. The
+reference is pure black and lets overlapping limbs merge into one
+mass; at video scale that loses the pose completely, and a second
+tone costs nothing because the result is still a silhouette.
 
-The eye is a single dot, and it is not decoration. A bare ring gives
-no clue which way a figure faces, and the entire staging is the two
-of them turned towards each other; the dot and her bun are what fix
-the profile. Props follow the same rule — the cup is a stroked
-outline, the chopsticks are two lines.
+Every beat is pose, because there is no face to carry one. Prop
+tips are solved against the head rather than eyeballed — the
+chopsticks straddle the hand so the tip lands on the mouth instead
+of halfway across the skull, and the cup rim meets the same point.
 
-Every beat is pose, because there is no face to carry one: the lift,
-the tip of the cup, the chew. The prop tips are solved against the
-head, not eyeballed — the chopsticks straddle the hand so the tip
-lands on the ring's front edge rather than halfway across the skull,
-and the cup rim meets the same point.
+**The food animates.** The lid lifts clear of the steamer stack in
+the first three seconds, tipping as it rises, and the steam under
+it jumps to nearly three times its resting strength while dumplings
+fade in inside the open basket. His plate starts with five
+dumplings and is down to four the moment he takes one. The table
+also carries a clay teapot, a noodle bowl, a second small steamer
+and a sauce dish — all of it steaming on fixed phases, because
+random per-call values crawl between frames.
 
-**The camera is one slow pull-back.** It opens tight enough that the
-outer chair posts are out of frame — close on the two of them and
-the table — and widens over 5.3 s to the whole tableau, chairs and
-feet included, landing just as the white wash begins. The scale is
-interpolated exponentially rather than linearly: a zoom that steps
-evenly through scale reads as decelerating, and this has to feel
-like a single gesture. The camera's bottom edge stays pinned near
-the floor line so the move never crops to a pair of talking heads.
+**The room is back, as a space rather than a building:** a wall, a
+floor, a dado rail, two lit screens and two lanterns. It is drawn
+in the same flat language as the figures and kept deliberately
+light — a dark floor swallows the wine figure's feet the moment the
+camera pulls out far enough to show them. The rail is painted
+before the screens so it passes behind them instead of across them.
+Background tables were tried and cut: at the alpha that kept them
+in the background they read as pale glitches rather than
+atmosphere.
 
-The film is eight seconds on a flat cream field: no restaurant, no
+**The camera is one long pull-back.** It opens tight on the pair
+and the table — no floor, no lanterns, nothing but the two of them,
+which is where the lid beat plays so the food is large when it
+moves — and widens over 8.9s to the whole room, landing as the
+white wash begins. expLerp, not lerp: a zoom that steps evenly
+through scale reads as decelerating, and this has to land as one
+continuous move.
+
+The film is twelve seconds on a flat cream field: no restaurant, no
 room, nothing but the table and the two of them. He eats, she
 answers, she drinks, he sets down his chopsticks, they raise their
 cups together and drink to it, and she laughs. Then the picture
