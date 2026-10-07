@@ -30,27 +30,23 @@ cup, the chew. The camera's bottom edge is pinned to the floor line
 so the whole tableau — chairs, legs, feet — sits in frame the way
 the reference does.
 
-The film opens on a flat cream field — no room, just the two of
-them at the table, the way the reference sheet stages it. He eats,
-she answers, she drinks, he sets down his chopsticks, they raise
-their cups together and drink to it, and she laughs. The
-restaurant only fades up underneath once the camera starts to pull
-back, at 4.3 s.
+The film is eight seconds on a flat cream field: no restaurant, no
+room, nothing but the table and the two of them. He eats, she
+answers, she drinks, he sets down his chopsticks, they raise their
+cups together and drink to it, and she laughs. Then the picture
+washes to white and the mark resolves on its own.
 
-The palette is clay plaster, ink-green joinery, aged brass, walnut
-and amber light — warmer and lower-keyed than the grey stone and
-bright green it replaced. The glass carries a sky tint and soft
-diagonal reflections, the plaster and limewash carry fixed
-blotches, the piers throw shadows onto paving that has joints in
-it, and the transom band is divided into lights with gold
-signwriting across it.
+The restaurant was built, refined twice, and then cut. Everything
+that drew it — facade, glazing, signage, blade sign, lanterns,
+lattice, the room itself — came out with it, about half the file.
+It is all in the history if it is ever wanted back.
 
-The shopfront is green joinery fitted into a warm clay building,
-with brass as the accent metal: a cream-and-brass sign painted
-straight onto the deep green fascia, three picture lights washing
-it, a projecting blade sign on the near pier, and two clipped bays
-on the pavement. Three bays — window, entrance, window — tied
-together by one transom line running the full width.
+The performance is deliberately small. Amplitudes sit at roughly
+a third of where they started: the chew is a nod rather than a
+chatter, the laugh is a lean back and settle rather than a
+shudder, and the camera does one slow widening instead of a
+reveal. At this scale, motion that feels right while you are
+authoring it reads as fidget on playback.
 
 Everything is drawn: the performance, the camera move and both the
 shopfront sign and the end card are baked into the video, so the site

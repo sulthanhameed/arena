@@ -22,7 +22,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *  — the picture is video, not a slideshow, so this component is
  *  deliberately thin: play it, follow it, and get out of the way.
  *
- *  Skippable throughout; `prefers-reduced-motion` never mounts it.
+ *  There is no skip control: the film is eight seconds and
+ *  `prefers-reduced-motion` never mounts it at all. A keyboard
+ *  escape stays, unadvertised, so it can never trap anyone.
  */
 
 export type IntroPhase = "playing" | "exiting" | "done";
@@ -45,8 +47,8 @@ const FILM_POSTER = "/intro/poster.jpg";
 /** Length of the film, and the moment the hand-over begins. The exit
  *  overlaps the last held beat on the sign, so the site arrives while
  *  the logo is still up rather than after a dead pause. */
-const FILM_MS = 10000;
-const EXIT_AT = 9700;
+const FILM_MS = 8000;
+const EXIT_AT = 7700;
 const EXIT_MS = 900;
 
 /** If the first frame cannot be decoded and playing by now, the film
@@ -231,7 +233,6 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
       aria-hidden="true"
       data-intro-root=""
       data-intro-ready={rolling ? "1" : "0"}
-      onClick={exiting ? undefined : finish}
     >
       <div className="intro-film absolute inset-0 overflow-hidden">
         <video
@@ -272,23 +273,6 @@ export default function IntroCinematic({ onPhaseChange }: Props) {
         />
       </div>
 
-      {/* ─── Skip ─── */}
-      {!exiting && (
-        <button
-          type="button"
-          // The film is decorative and hidden from assistive tech, so this
-          // button stays out of the tab order; Enter / Space / Esc skip too.
-          tabIndex={-1}
-          onClick={(e) => {
-            e.stopPropagation();
-            finish();
-          }}
-          className="absolute right-6 z-10 rounded-full border border-white/25 bg-black/20 px-4 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-white/60 backdrop-blur-sm transition hover:border-white/60 hover:text-white"
-          style={{ bottom: "calc(7vh + 1.5rem)" }}
-        >
-          Skip
-        </button>
-      )}
     </div>
   );
 }
