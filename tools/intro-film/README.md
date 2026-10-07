@@ -12,23 +12,37 @@ the picture washes to white and the brand lockup resolves on its own
 card: the green roundel carrying 康, then KHANG, a jade hairline and
 CHINESE · DIMSUM, the same mark the site wears in its header.
 
-The guests are **flat pictograms in profile**, facing each other
+The guests are **drawn figures in profile**, facing each other
 across the table on two chairs, legs and feet in frame — the staging
 of the reference the design came from. One eats with chopsticks, the
 other drinks from a teacup, and around 1.9 s both hands are up at
 once, which is the reference's composition.
 
-They are **coloured** pictograms — flat fills, no outline, no facial
-features, but skin, hair and cloth rather than one solid ink. Her
-clay against his green is the only strong colour contrast in the
-room, which is what keeps the pair reading as the subject once the
-camera has pulled back to the whole shopfront. The background
-diners use the same rig in a muted palette so they sit back.
+They are drawn as **people, not pictograms**. The head is a single
+closed profile path — forehead, brow ridge, nose, lips, chin, jaw —
+and carries a brow, an eye with sclera, iris and upper lid, a
+nostril, a lip and an ear. Hair is a second closed shell that sits
+*proud* of the skull, because a hairline that traces the scalp
+exactly reads as a coloured-in bald head; she wears a bun, he wears
+a fringe that comes down onto the forehead. The head is about 0.18
+of the seated height, which is the real ratio.
 
-With no faces, every beat has to be pose: the lift, the tip of the
-cup, the chew. The camera's bottom edge is pinned to the floor line
-so the whole tableau — chairs, legs, feet — sits in frame the way
-the reference does.
+Nothing is a flat fill. The torso runs a horizontal
+`topSh → top → topHi` gradient, the face a diagonal
+`skinSh → skin → skinHi` clipped to the profile, and every limb is a
+`taper()` — a quad that narrows from joint to joint with the joints
+rounded off, shaded by a gradient *across* its width. The two things
+that look wrong and were tried: a constant-width stroke, which reads
+as a tube, and a second darker shape laid on top, which reads as a
+sausage with a stripe painted down it. Only a gradient across the
+limb reads as an arm. The far leg and far arm sit at 0.72 alpha so
+the body has depth in a flat profile.
+
+Faces earn the beats that pose alone used to carry, but pose still
+does the work: the lift, the tip of the cup, the chew. The camera's
+bottom edge is pinned to the floor line so the whole tableau —
+chairs, legs, feet — sits in frame the way the reference stages it,
+and never crops to a pair of talking heads.
 
 The film is eight seconds on a flat cream field: no restaurant, no
 room, nothing but the table and the two of them. He eats, she
