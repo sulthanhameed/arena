@@ -58,16 +58,17 @@ white wash begins. expLerp, not lerp: a zoom that steps evenly
 through scale reads as decelerating, and this has to land as one
 continuous move.
 
-The film is twelve seconds on a flat cream field: no restaurant, no
-room, nothing but the table and the two of them. He eats, she
-answers, she drinks, he sets down his chopsticks, they raise their
-cups together and drink to it, and she laughs. Then the picture
-washes to white and the mark resolves on its own.
+The film is twelve seconds in a dining room. The lid comes off the
+steamer, he eats, she answers, she drinks, he sets down his
+chopsticks, they raise their cups together and drink to it, and she
+laughs. Then the picture washes to white and the mark resolves on
+its own, with the room gone — the logo has never shared a frame
+with the restaurant and still does not.
 
-The restaurant was built, refined twice, and then cut. Everything
-that drew it — facade, glazing, signage, blade sign, lanterns,
-lattice, the room itself — came out with it, about half the file.
-It is all in the history if it is ever wanted back.
+The shopfront was built, refined twice, cut entirely, and is not
+what came back. What came back is the interior only, rebuilt flat:
+no facade, no glazing, no signage, no blade sign, no lattice. The
+old version is in the history if it is ever wanted.
 
 The performance is deliberately small. Amplitudes sit at roughly
 a third of where they started: the chew is a nod rather than a
