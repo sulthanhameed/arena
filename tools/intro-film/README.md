@@ -30,6 +30,13 @@ cup, the chew. The camera's bottom edge is pinned to the floor line
 so the whole tableau — chairs, legs, feet — sits in frame the way
 the reference does.
 
+The film opens on a flat cream field — no room, just the two of
+them at the table, the way the reference sheet stages it. He eats,
+she answers, she drinks, he sets down his chopsticks, they raise
+their cups together and drink to it, and she laughs. The
+restaurant only fades up underneath once the camera starts to pull
+back, at 4.3 s.
+
 The palette is clay plaster, ink-green joinery, aged brass, walnut
 and amber light — warmer and lower-keyed than the grey stone and
 bright green it replaced. The glass carries a sky tint and soft
@@ -143,6 +150,10 @@ the end, and the retreat between them is a single continuous zoom.
   difference between glass and cardboard.
 - **Gold signwriting belongs in the transom band.** Across the
   lower glass it lands on top of the background diners.
+- **Blend held-object poses in series, not in parallel.** The arm
+  solver adds its targets together, so a raised cup that also goes
+  to the lips overshot clean off the top of the head. Rest → toast
+  → mouth has to be a chain.
 - **A cup is not held like chopsticks.** It needed its own mouth pose
   — lower and further back — plus its own angle ramp, from upright on
   the table to tipped at the lips. Driven off the chopstick pose she

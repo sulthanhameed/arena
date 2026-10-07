@@ -254,6 +254,7 @@ function drawFigure(ctx, o) {
     holding = 0, // dumpling scale at the chopstick tip
     sticks = false,
     cup = false,
+    toast = 0,
     pal = GUESTS.m,
   } = o;
 
@@ -334,10 +335,20 @@ function drawFigure(ctx, o) {
     ? { ex: 108, ey: -272, hx: 116, hy: HEADC.y + 60 }
     : { ex: 116, ey: -280, hx: 130, hy: HEADC.y + 44 };
   const GEST = { ex: 44, ey: -266, hx: 108, hy: -346 };
-  const ex = REST.ex + u * (MOUTH.ex - REST.ex) + g * (GEST.ex - REST.ex);
-  const ey = REST.ey + u * (MOUTH.ey - REST.ey) + g * (GEST.ey - REST.ey);
-  const hx = REST.hx + u * (MOUTH.hx - REST.hx) + g * (GEST.hx - REST.hx);
-  const hy = REST.hy + u * (MOUTH.hy - REST.hy) + g * (GEST.hy - REST.hy);
+  /* cup up and out towards the other side of the table */
+  const TOAST = { ex: 92, ey: -312, hx: 152, hy: -358 };
+  /* Blended in series, not added: rest → toast → mouth. Added, a
+     raised cup that also goes to the lips overshoots clean off the
+     top of the head. */
+  const wt = clamp01(toast);
+  const bEx = REST.ex + wt * (TOAST.ex - REST.ex);
+  const bEy = REST.ey + wt * (TOAST.ey - REST.ey);
+  const bHx = REST.hx + wt * (TOAST.hx - REST.hx);
+  const bHy = REST.hy + wt * (TOAST.hy - REST.hy);
+  const ex = bEx + u * (MOUTH.ex - bEx) + g * (GEST.ex - REST.ex);
+  const ey = bEy + u * (MOUTH.ey - bEy) + g * (GEST.ey - REST.ey);
+  const hx = bHx + u * (MOUTH.hx - bHx) + g * (GEST.hx - REST.hx);
+  const hy = bHy + u * (MOUTH.hy - bHy) + g * (GEST.hy - REST.hy);
   limb(ctx, SHO.x + 4, SHO.y + 22, ex, ey, 28, pal.top);
   limb(ctx, ex, ey, hx, hy, 25, pal.top);
   ctx.fillStyle = pal.skin;
@@ -660,7 +671,20 @@ function sideTable(ctx, x, flip, t, i) {
   ctx.restore();
 }
 
-function drawInterior(ctx, t) {
+function drawInterior(ctx, t, roomAlpha) {
+  /* Act one plays on a flat field: no room, just the two of them,
+     the way the reference sheet stages it. The restaurant fades up
+     underneath as the camera starts to pull back. */
+  const bd = ctx.createRadialGradient(0, -430, 90, 0, -380, 1560);
+  bd.addColorStop(0, "#f6eddc");
+  bd.addColorStop(1, "#ebe0cb");
+  ctx.fillStyle = bd;
+  ctx.fillRect(-1600, -1400, 3200, 1660);
+
+  const room = roomAlpha === undefined ? 1 : clamp01(roomAlpha);
+  ctx.save();
+  if (room < 0.999) ctx.globalAlpha *= room;
+
   /* wall */
   ctx.fillStyle = WALL;
   ctx.fillRect(-1600, -1240, 3200, 1240);
@@ -758,6 +782,7 @@ function drawInterior(ctx, t) {
   lantern(ctx, 616, -700, 60, t, 2);
   lantern(ctx, -1066, -690, 52, t, 1);
   lantern(ctx, 1066, -696, 52, t, 3);
+  ctx.restore();
 
   drawTable(ctx, t);
 
@@ -775,30 +800,47 @@ function drawInterior(ctx, t) {
     return 0;
   };
 
-  /* he eats first, she drinks over the top of it — so that around
-     1.9 s both hands are up, which is the reference's composition */
-  const liftR = arc(0.45, 1.12, 1.44, 2.1);
-  const liftL = arc(1.46, 2.08, 2.46, 3.08);
+  /* Act one has no room to carry it, so everything has to come
+     from the two of them: he eats, she answers, she drinks, he sets
+     down his chopsticks, they raise their cups together, drink to
+     it, and she laughs. */
+  const liftR = arc(0.25, 0.85, 1.15, 1.8); // he eats
+  const gestR = arc(1.95, 2.15, 2.55, 2.85); // he says something
+  const liftL = arc(1.6, 2.1, 2.4, 2.9); // she drinks
+  const gestL1 = arc(1.0, 1.22, 1.72, 2.02); // she answers him
+  const gestL2 = arc(5.15, 5.45, 5.95, 6.3); // still talking as we leave
+  const toastW = arc(2.95, 3.45, 4.25, 4.8); // cups up, together
+  const sipBoth = arc(3.65, 3.95, 4.15, 4.5); // and a drink to it
 
-  const talking = (t > 2.9 && t < 3.9) || (t > 4.6 && t < 5.4);
-  const talkIn = talking ? seg(t, t > 4.5 ? 4.6 : 2.9, t > 4.5 ? 4.86 : 3.16) : 0;
-  const talkOut = t > 3.6 && t < 3.9 ? 1 - seg(t, 3.6, 3.9) : 1;
-  const gestureL =
-    (talking ? talkIn * talkOut : 0) * (0.72 + 0.28 * Math.sin(t * 5.2));
-  const tiltL = talking
-    ? Math.sin(t * 5.4) * 0.05 + Math.sin(t * 1.9) * 0.025
-    : Math.sin(t * 1.9) * 0.025;
+  const wobble = 0.72 + 0.28 * Math.sin(t * 5.2);
+  const gestureL = (gestL1 + gestL2) * wobble;
+  const gestureR = gestR * wobble;
 
-  const atMouth = 1.12;
-  const biteEnd = 1.44;
+  /* the laugh: head back, then a shudder. On a faceless head it is
+     the only way to play one. */
+  const laughU =
+    t > 4.28 && t < 5.0 ? Math.sin(((t - 4.28) / 0.72) * Math.PI) : 0;
+
+  const atMouth = 0.85;
+  const biteEnd = 1.15;
 
   /* the chew: a small, insistent nod, which is how a faceless head
      tells you there is food in it */
-  const chewing = t > biteEnd && t < biteEnd + 2.2;
-  const nodR = chewing ? Math.sin((t - biteEnd) * 13.5) * 5.5 : Math.sin(t * 2.2) * 1.6;
+  const chewing = t > biteEnd && t < biteEnd + 1.5;
+  const nodR =
+    (chewing ? Math.sin((t - biteEnd) * 13.5) * 5.5 : Math.sin(t * 2.2) * 1.6) +
+    laughU * Math.sin(t * 17) * 2.2;
   const holdingR =
-    t < atMouth - 0.02 ? (t > 0.24 ? 1 : 0)
+    t < atMouth - 0.02 ? (t > 0.12 ? 1 : 0)
       : clamp01(1 - (t - (atMouth - 0.02)) / 0.16);
+
+  const tiltL =
+    Math.sin(t * 1.9) * 0.025 +
+    (gestL1 + gestL2) * Math.sin(t * 5.4) * 0.05 -
+    laughU * 0.17 +
+    laughU * Math.sin(t * 19) * 0.03;
+  const nodL =
+    Math.sin(t * 2.4) * 1.6 - laughU * 7 + laughU * Math.sin(t * 19) * 2.6;
 
   const breathe = (ph) => Math.sin(t * 1.7 + ph) * 3.2;
 
@@ -809,10 +851,11 @@ function drawInterior(ctx, t) {
     pal: GUESTS.w,
     bun: true,
     cup: true,
-    lift: liftL,
+    lift: Math.max(liftL, sipBoth),
+    toast: toastW,
     gesture: gestureL,
     tilt: tiltL,
-    nod: Math.sin(t * 2.4) * 1.6,
+    nod: nodL,
     breath: breathe(0),
   });
   ctx.restore();
@@ -822,10 +865,14 @@ function drawInterior(ctx, t) {
   drawFigure(ctx, {
     dir: -1,
     pal: GUESTS.m,
-    sticks: true,
-    lift: liftR,
+    /* he puts the chopsticks down to pick his cup up for the toast */
+    sticks: t < 2.78,
+    cup: t >= 2.78,
+    lift: Math.max(liftR, sipBoth),
+    toast: toastW,
+    gesture: gestureR,
     nod: nodR,
-    tilt: Math.sin(t * 1.6 + 2) * 0.02 - liftR * 0.04,
+    tilt: Math.sin(t * 1.6 + 2) * 0.02 - liftR * 0.04 + laughU * 0.12,
     breath: breathe(2.1),
     holding: holdingR,
   });
@@ -896,8 +943,8 @@ function signLockup(ctx) {
   ctx.fillRect(rl, cy + 26, tw, 2);
 
   ctx.fillStyle = BRASS_L;
-  ctx.font = "15px KhangSans";
-  tracked(ctx, "CHINESE · DIM SUM", rl + tw / 2, cy + 52, 7);
+  ctx.font = "14px KhangSans";
+  tracked(ctx, "DIMSUM CHINESE RESTAURANT", 960, cy + 52, 5.5);
 }
 
 /** A projecting blade sign on the near pier — what tells you this
@@ -1228,9 +1275,9 @@ function drawGlazingFrame(ctx, alpha) {
   ctx.fillStyle = BRASS_L;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = "15px KhangSans";
+  ctx.font = "13px KhangSans";
   const tmid = (y + TRANSOM) / 2;
-  tracked(ctx, "CHINESE · DIM SUM", (x + DOOR.x) / 2, tmid, 6);
+  tracked(ctx, "DIMSUM CHINESE RESTAURANT", (x + DOOR.x) / 2, tmid, 3.5);
   tracked(ctx, "OPEN 11 — 23 DAILY", (DOOR.x + DOOR.w + x + w) / 2, tmid, 6);
   ctx.restore();
 
@@ -1327,11 +1374,11 @@ function drawEndCard(ctx, t) {
   if (aSub > 0) {
     ctx.save();
     ctx.globalAlpha = aSub;
-    ctx.fillStyle = "rgba(15,32,22,0.62)";
-    ctx.font = "22px KhangSans";
+    ctx.fillStyle = "rgba(6,78,46,0.82)";
+    ctx.font = "23px KhangSans";
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    tracked(ctx, "CHINESE · DIMSUM", cx, 762, 11);
+    tracked(ctx, "DIMSUM CHINESE RESTAURANT", cx, 764, 9);
     ctx.restore();
   }
 }
@@ -1340,12 +1387,12 @@ function drawEndCard(ctx, t) {
  * Scale 4.3 is a two-shot across the table; scale 1 frames the
  * whole shopfront. One continuous move, held at each end.          */
 function camera(t) {
-  const hold = seg(t, 0, 2.8, (u) => u);
-  const pull = seg(t, 2.8, 6.4, easeInOut);
-  const drift = seg(t, 6.4, 7.5, (u) => u);
+  const hold = seg(t, 0, 4.3, (u) => u);
+  const pull = seg(t, 4.3, 6.35, easeInOut);
+  const drift = seg(t, 6.35, 7.6, (u) => u);
   let scale;
   let cy;
-  if (t >= 6.4) {
+  if (t >= 6.35) {
     scale = lerp(1.0, 1.045, drift);
     cy = lerp(540, 528, drift);
   } else if (pull > 0) {
@@ -1398,7 +1445,7 @@ function renderFrame(ctx, t, frame) {
   ctx.clip();
   ctx.translate(ORIGIN.x, ORIGIN.y);
   ctx.scale(K, K);
-  drawInterior(ctx, t);
+  drawInterior(ctx, t, clamp01(seg(t, 4.15, 5.3, easeInOut)));
   ctx.restore();
 
   drawGlazingFrame(ctx, clamp01((3.6 - cam.scale) / 1.3));
