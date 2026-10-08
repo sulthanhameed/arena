@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { MENU, type FoodItem } from "../data/menu";
+import type { FoodItem } from "../data/menu";
+import { useMenu } from "../context/MenuContext";
 import { CloseIcon, SearchIcon, StarIcon } from "./Icons";
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function SearchModal({ open, onClose, onPick }: Props) {
+  const { menu } = useMenu();
   const [q, setQ] = useState("");
 
   useEffect(() => {
@@ -24,16 +26,16 @@ export default function SearchModal({ open, onClose, onPick }: Props) {
   }, [open]);
 
   const results = useMemo(() => {
-    if (!q.trim()) return MENU.slice(0, 6);
+    if (!q.trim()) return menu.slice(0, 6);
     const term = q.toLowerCase();
-    return MENU.filter(
+    return menu.filter(
       (m) =>
         m.name.toLowerCase().includes(term) ||
         m.chineseName.includes(q) ||
         m.category.toLowerCase().includes(term) ||
         m.description.toLowerCase().includes(term),
     );
-  }, [q]);
+  }, [menu, q]);
 
   if (!open) return null;
 

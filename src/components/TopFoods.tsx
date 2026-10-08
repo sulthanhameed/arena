@@ -1,4 +1,5 @@
-import { MENU, type FoodItem } from "../data/menu";
+import type { FoodItem } from "../data/menu";
+import { useMenu } from "../context/MenuContext";
 import SectionHeading from "./SectionHeading";
 import { StarIcon } from "./Icons";
 import ParallaxImage from "./ParallaxImage";
@@ -9,7 +10,8 @@ interface Props {
 }
 
 export default function TopFoods({ onView }: Props) {
-  const top = [...MENU].sort((a, b) => b.rating - a.rating).slice(0, 6);
+  const { menu } = useMenu();
+  const top = [...menu].sort((a, b) => b.rating - a.rating).slice(0, 6);
 
   return (
     <section id="top" className="relative overflow-hidden bg-zinc-50 py-24 sm:py-32">

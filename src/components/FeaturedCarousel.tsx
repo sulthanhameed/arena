@@ -1,9 +1,10 @@
-import { MENU } from "../data/menu";
+import { useMenu } from "../context/MenuContext";
 import { StarIcon } from "./Icons";
 import SectionHeading from "./SectionHeading";
 
 export default function FeaturedCarousel() {
-  const featured = MENU.filter((m) => m.featured);
+  const { menu } = useMenu();
+  const featured = menu.filter((m) => m.featured);
   const loop = [...featured, ...featured, ...featured];
 
   return (

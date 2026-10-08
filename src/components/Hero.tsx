@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { MENU, type FoodItem } from "../data/menu";
+import type { FoodItem } from "../data/menu";
+import { useMenu } from "../context/MenuContext";
 import { FlameIcon, StarIcon } from "./Icons";
 
 // Fixed position slots — center + 4 around
@@ -20,7 +21,8 @@ const SLOT_POS: Record<Slot, { left: number; top: number; size: number; z: numbe
 
 export default function Hero() {
   // Top 5 featured for the showcase
-  const featured = MENU.filter((m) => m.featured);
+  const { menu } = useMenu();
+  const featured = menu.filter((m) => m.featured);
   const pool = [...featured].sort((a, b) => b.rating - a.rating).slice(0, 5);
 
   // Map slot -> food item — same slots, but we'll key each rendered dish by its ID

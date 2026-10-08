@@ -171,6 +171,23 @@ Sign in with **`admin@khang.com` / `admin123`** to open the admin dashboard.
 - 🚚 **Live order tracking** — public `track_order()` RPC, no sign-in needed
 - ⚡ **Admin dashboard** — order management over **Supabase Realtime**
 
+### Where the menu comes from
+
+The storefront reads its dishes from Postgres, not from a bundled array.
+`src/context/MenuContext.tsx` is the single source: on mount it pulls
+`products` and `categories` over PostgREST (the one thing anon may read
+under RLS) and hands them to every component through `useMenu()`.
+
+`src/data/menu.ts` is a **fallback**, not the source of truth. It is used
+when `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are unset, and when a
+configured project fails or takes longer than 8 seconds — the page shows
+the bundled copy with a notice rather than an empty restaurant or an
+indefinite spinner. The seed keeps `products.code` in parity with the
+ids in that file so the two never disagree.
+
+To confirm which one you are looking at, the menu section carries
+`data-menu-source="supabase | offline"`.
+
 See **[`frontend/README.md`](./frontend/README.md)** for component details.
 
 ```bash

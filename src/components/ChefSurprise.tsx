@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { MENU, type FoodItem } from "../data/menu";
+import type { FoodItem } from "../data/menu";
+import { useMenu } from "../context/MenuContext";
 import { SparkleIcon, StarIcon } from "./Icons";
 import Reveal from "./Reveal";
 import RevealText from "./RevealText";
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function ChefSurprise({ onView }: Props) {
+  const { menu } = useMenu();
   const [spinning, setSpinning] = useState(false);
   const [picked, setPicked] = useState<FoodItem | null>(null);
   const [displayIdx, setDisplayIdx] = useState(0);
@@ -19,18 +21,19 @@ export default function ChefSurprise({ onView }: Props) {
     let i = 0;
     const interval = setInterval(() => {
       i++;
-      setDisplayIdx(Math.floor(Math.random() * MENU.length));
+      setDisplayIdx(Math.floor(Math.random() * menu.length));
       if (i > 28) {
         clearInterval(interval);
-        const finalPick = MENU[Math.floor(Math.random() * MENU.length)];
+        const finalPick = menu[Math.floor(Math.random() * menu.length)];
         setPicked(finalPick);
-        setDisplayIdx(MENU.indexOf(finalPick));
+        setDisplayIdx(menu.indexOf(finalPick));
         setSpinning(false);
       }
     }, 80);
   };
 
-  const current = MENU[displayIdx];
+  // The menu can arrive (or change length) after this mounted.
+  const current = menu[displayIdx] ?? menu[0];
 
   return (
     <section
@@ -86,7 +89,7 @@ export default function ChefSurprise({ onView }: Props) {
 
             <Reveal variant="fade" delay={550} duration={500}>
               <div className="mt-10 flex items-center gap-6 font-mono text-[11px] uppercase tracking-[0.2em] text-khang-ink/40">
-                <span>{MENU.length} dishes</span>
+                <span>{menu.length} dishes</span>
                 <span className="h-px w-8 bg-khang-ink/15" />
                 <span>1 lucky pick</span>
               </div>

@@ -1,4 +1,5 @@
-import { CATEGORIES, type Category } from "../data/menu";
+import type { Category } from "../data/menu";
+import { useMenu } from "../context/MenuContext";
 
 interface Props {
   active: Category | "All";
@@ -6,9 +7,10 @@ interface Props {
 }
 
 export default function Categories({ active, onSelect }: Props) {
+  const { categories } = useMenu();
   const all: ({ name: Category | "All"; icon: string })[] = [
     { name: "All", icon: "✦" },
-    ...CATEGORIES.map((c) => ({ name: c.name, icon: c.icon })),
+    ...categories.map((c) => ({ name: c.name, icon: c.icon })),
   ];
 
   return (

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FoodItem } from "./data/menu";
 import { CartProvider, useCart } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
+import { MenuProvider } from "./context/MenuContext";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import FeaturedCarousel from "./components/FeaturedCarousel";
@@ -19,10 +20,6 @@ import SearchModal from "./components/SearchModal";
 import AuthModal from "./components/AuthModal";
 import AdminDashboard from "./components/AdminDashboard";
 import ScrollProgressBar from "./components/ScrollProgressBar";
-import IntroCinematic, {
-  shouldSkipIntro,
-  type IntroPhase,
-} from "./components/IntroCinematic";
 import { CartIcon } from "./components/Icons";
 
 function FloatingCartButton() {
@@ -80,27 +77,13 @@ function Shell() {
 }
 
 export default function App() {
-  // Mirrors the intro's own decision so the page is never needlessly held back.
-  const [introPhase, setIntroPhase] = useState<IntroPhase>(() =>
-    shouldSkipIntro() ? "done" : "playing",
-  );
-
-  // While the curtain is up the site sits blurred and scaled up behind it.
-  // The class is dropped entirely afterwards — a lingering `transform` would
-  // become the containing block for the fixed navbar, cart button and modals.
-  const stageClass =
-    introPhase === "done"
-      ? undefined
-      : `intro-stage${introPhase === "exiting" ? " is-opening" : ""}`;
-
   return (
     <AuthProvider>
-      <CartProvider>
-        <div className={stageClass}>
+      <MenuProvider>
+        <CartProvider>
           <Shell />
-        </div>
-        <IntroCinematic onPhaseChange={setIntroPhase} />
-      </CartProvider>
+        </CartProvider>
+      </MenuProvider>
     </AuthProvider>
   );
 }
