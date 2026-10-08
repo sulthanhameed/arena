@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { FoodItem } from "./data/menu";
 import { CartProvider, useCart } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -21,6 +21,10 @@ import AuthModal from "./components/AuthModal";
 import AdminDashboard from "./components/AdminDashboard";
 import ScrollProgressBar from "./components/ScrollProgressBar";
 import { CartIcon } from "./components/Icons";
+import IntroCinematic, {
+  shouldSkipIntro,
+  type IntroPhase,
+} from "./components/IntroCinematic";
 
 function FloatingCartButton() {
   const { count, openCart, total } = useCart();
@@ -77,11 +81,30 @@ function Shell() {
 }
 
 export default function App() {
+  /* The film sits over the site rather than instead of it: the page
+     mounts and loads underneath while the intro plays, so by the time
+     the shutter opens the menu is already there. The two classes just
+     hold it back (blurred, a shade large) and then let it arrive. */
+  const [introPhase, setIntroPhase] = useState<IntroPhase>(() =>
+    shouldSkipIntro() ? "done" : "playing",
+  );
+  const onPhaseChange = useCallback((p: IntroPhase) => setIntroPhase(p), []);
+
+  const held = introPhase === "playing";
+  const releasing = introPhase === "exiting";
+
   return (
     <AuthProvider>
       <MenuProvider>
         <CartProvider>
-          <Shell />
+          <div
+            className={
+              held ? "site-behind-intro" : releasing ? "site-released" : undefined
+            }
+          >
+            <Shell />
+          </div>
+          <IntroCinematic onPhaseChange={onPhaseChange} />
         </CartProvider>
       </MenuProvider>
     </AuthProvider>
