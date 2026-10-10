@@ -5,23 +5,25 @@ import { useCallback, useEffect, useState } from "react";
  *  Khang entrance — two-act white-canvas intro
  * ─────────────────────────────────────────────────────────────
  *
- *  Act I — The Diner Eating (0.00s – 3.55s):
+ *  Act I — The Diner Eating (0.00s – 3.70s):
  *    0.00s  the black curtain opens into a crisp white background
- *    0.08s  close-up on the person eating hot food from the steaming
- *           bowl (fork lifts bite to mouth, head nods, steam curls)
- *    1.25s  camera smoothly zooms out to show the full person at the
- *           table centered on the white background
- *    2.50s  full person holds on white while finishing their bite
- *    3.05s  the diner scene fades and scales away cleanly
+ *    0.05s  tight 3.9x macro close-up on the person eating hot food
+ *           (fork lifts bite into mouth, head tilts & chews happily,
+ *           shoulders bounce, savour rays & jade spark pop, steam
+ *           plumes & aroma puffs rise from the bowl)
+ *    0.95s  sweeping 3.9x → 1x camera zoom-out revealing the full
+ *           person at the table on the white background
+ *    2.65s  full person holds on white while finishing their bite
+ *    3.20s  the diner scene fades and scales away cleanly
  *
- *  Act II — The Logo & Name (3.40s – 7.15s, separate final card):
- *    3.40s  the ring scribes clockwise in the centre of the screen
- *    3.70s  the green medallion blooms inside it and 康 rises
- *    3.95s  Khang Dimsum lifts letter by letter from behind a mask
- *    4.55s  a hairline rule opens out from the centre
- *    4.75s  CHINESE RESTAURANT settles in from wide tracking
- *    5.35s  the finished lockup holds
- *    6.35s  it lifts away and opens onto the live site
+ *  Act II — The Logo & Name (3.55s – 7.35s, separate final card):
+ *    3.55s  the ring scribes clockwise in the centre of the screen
+ *    3.85s  the green medallion blooms inside it and 康 rises
+ *    4.10s  Khang Dimsum lifts letter by letter from behind a mask
+ *    4.70s  a hairline rule opens out from the centre
+ *    4.90s  CHINESE RESTAURANT settles in from wide tracking
+ *    5.50s  the finished lockup holds
+ *    6.55s  it lifts away and opens onto the live site
  */
 
 export type IntroPhase = "playing" | "exiting" | "done";
@@ -37,7 +39,7 @@ const PLAY_ONCE_PER_SESSION = false;
 const SESSION_KEY = "khang_intro_played";
 
 /** EXIT_MS must match the `.is-opening` animation duration in index.css. */
-const HOLD_MS = 6350;
+const HOLD_MS = 6550;
 const EXIT_MS = 800;
 
 const NAME = "Khang Dimsum";
@@ -144,7 +146,7 @@ export default function IntroEntrance({ onPhaseChange }: Props) {
       <div className="intro-veil" />
       <div className="intro-black-curtain" />
 
-      {/* ─── ACT I: The Diner Eating + Camera Zoom-Out on White ─── */}
+      {/* ─── ACT I: The Diner Eating + Sweeping 3.9x Zoom-Out on White ─── */}
       <div className="intro-scene-diner">
         <div className="intro-diner-camera">
           <svg
@@ -155,8 +157,13 @@ export default function IntroEntrance({ onPhaseChange }: Props) {
             {/* Solid horizontal table bar */}
             <rect x="44" y="384" width="512" height="30" fill="#0a0a0a" />
 
-            {/* Left: Steaming bowl with rising S-curve steam waves */}
+            {/* Left: Steaming bowl with rising S-curve waves & aroma puffs */}
             <g className="intro-diner-bowl">
+              {/* Rising aroma puffs above the steam */}
+              <g transform="translate(106, 250)">
+                <circle className="intro-aroma-puff intro-aroma-puff-1" cx="-8" cy="0" r="3.5" fill="#15803d" />
+                <circle className="intro-aroma-puff intro-aroma-puff-2" cx="8" cy="-6" r="2.8" fill="#0a0a0a" />
+              </g>
               <g transform="translate(99, 278)">
                 <g className="intro-steam-wave intro-steam-wave-1">
                   <path
@@ -181,14 +188,28 @@ export default function IntroEntrance({ onPhaseChange }: Props) {
                   />
                 </g>
               </g>
-              <path
-                d="M 64 312 L 154 312 C 153 336, 143 352, 134 360 L 134 374 L 84 374 L 84 360 C 75 352, 65 336, 64 312 Z"
-                fill="#0a0a0a"
-              />
+              <g transform="translate(109, 343)">
+                <g className="intro-bowl-body">
+                  <path
+                    d="M -45 -31 L 45 -31 C 44 -7, 34 9, 25 17 L 25 31 L -25 31 L -25 17 C -34 9, -44 -7, -45 -31 Z"
+                    fill="#0a0a0a"
+                  />
+                </g>
+              </g>
             </g>
 
-            {/* Right: Mug with handle & half-filled drink */}
+            {/* Right: Mug with handle, sloshing drink & warm tea wisp */}
             <g className="intro-diner-mug">
+              <g transform="translate(494, 282)">
+                <path
+                  className="intro-mug-steam"
+                  d="M 0 10 C -4 5, -4 0, 0 -5 C 4 -10, 4 -15, 0 -20"
+                  fill="none"
+                  stroke="#0a0a0a"
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                />
+              </g>
               <path
                 d="M 521 314 C 542 314, 542 358, 521 358"
                 fill="none"
@@ -205,19 +226,58 @@ export default function IntroEntrance({ onPhaseChange }: Props) {
               </g>
             </g>
 
-            {/* Center: Torso and resting right-side arm */}
-            <g className="intro-diner-body">
-              <path
-                d="M 213 374 L 213 297 L 196 309 L 213 288 L 213 234 C 213 210, 240 200, 265 200 L 336 200 C 352 200, 366 206, 377 216 L 428 260 C 441 271, 443 288, 438 306 L 419 360 C 414 374, 396 380, 381 376 C 366 372, 360 358, 363 342 L 372 292 L 365 289 L 354 342 C 350 357, 354 367, 362 374 Z"
-                fill="#0a0a0a"
-              />
+            {/* Center: Torso and resting right-side arm with happy shoulder bounce */}
+            <g transform="translate(300, 374)">
+              <g className="intro-diner-body">
+                <path
+                  d="M -87 0 L -87 -77 L -104 -65 L -87 -86 L -87 -140 C -87 -164, -60 -174, -35 -174 L 36 -174 C 52 -174, 66 -168, 77 -158 L 128 -114 C 141 -103, 143 -86, 138 -68 L 119 -14 C 114 0, 96 6, 81 2 C 66 -2, 60 -16, 63 -32 L 72 -82 L 65 -85 L 54 -32 C 50 -17, 54 -7, 62 0 Z"
+                  fill="#0a0a0a"
+                />
+              </g>
             </g>
 
-            {/* Head with white collar halo and happy eating nod */}
+            {/* Head with white collar halo, happy eating nod & delight burst rays */}
             <g transform="translate(294, 148)">
               <g className="intro-diner-head">
                 <circle cx="0" cy="0" r="78" fill="#ffffff" />
                 <circle cx="0" cy="0" r="71" fill="#0a0a0a" />
+
+                {/* Savour / delight burst rays & jade spark that pop on each bite */}
+                <g transform="translate(78, -54)">
+                  <g className="intro-delight-burst">
+                    <line
+                      x1="0"
+                      y1="0"
+                      x2="14"
+                      y2="-14"
+                      stroke="#0a0a0a"
+                      strokeWidth="4.5"
+                      strokeLinecap="round"
+                    />
+                    <line
+                      x1="6"
+                      y1="10"
+                      x2="24"
+                      y2="6"
+                      stroke="#15803d"
+                      strokeWidth="4.5"
+                      strokeLinecap="round"
+                    />
+                    <line
+                      x1="-10"
+                      y1="-6"
+                      x2="-6"
+                      y2="-24"
+                      stroke="#0a0a0a"
+                      strokeWidth="4.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M 24 -16 L 27 -9 L 34 -6 L 27 -3 L 24 4 L 21 -3 L 14 -6 L 21 -9 Z"
+                      fill="#15803d"
+                    />
+                  </g>
+                </g>
               </g>
             </g>
 

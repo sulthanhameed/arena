@@ -421,10 +421,12 @@ body {
 
 /* ─────────────────────────────────────────────────────────────
    ENTRANCE INTRO — TWO SEPARATE SCENES
-   Act I  (0.00s – 3.52s): Black opens to white; close-up on the
-          person eating hot food from the steaming bowl, then
-          smoothly zooming out to show the full person on white.
-   Act II (3.40s – 7.15s): Separate final title card presenting
+   Act I  (0.00s – 3.68s): Black opens to white; tight 3.9x macro
+          close-up on the person eating hot food (fork lifts bite,
+          head tilts & chews happily, shoulders bounce, savour rays
+          & jade spark pop, aroma puffs & steam rise), then a wide
+          zoom-out reveals the full person centered on white.
+   Act II (3.55s – 7.35s): Separate final title card presenting
           the Khang Dimsum logo and name centered on screen.
    ───────────────────────────────────────────────────────────── */
 .intro-root {
@@ -462,7 +464,7 @@ body {
   100% { opacity: 0; }
 }
 
-/* ── ACT I: The Diner Eating + Zoom-Out on White ──────────── */
+/* ── ACT I: The Diner Eating + 3.9x Zoom-Out on White ─────── */
 .intro-scene-diner {
   position: absolute;
   inset: 0;
@@ -471,12 +473,12 @@ body {
   place-items: center;
   padding: 4vh 6vw;
   pointer-events: none;
-  animation: intro-diner-scene-out 470ms cubic-bezier(0.55, 0, 0.3, 1) 3050ms forwards;
+  animation: intro-diner-scene-out 480ms cubic-bezier(0.55, 0, 0.3, 1) 3200ms forwards;
 }
 
 @keyframes intro-diner-scene-out {
   0%   { transform: scale(1);    opacity: 1; }
-  100% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(0.9);  opacity: 0; }
 }
 
 .intro-diner-camera {
@@ -484,13 +486,14 @@ body {
   width: clamp(300px, 62vh, 560px);
   max-width: 90vw;
   transform-origin: 50% 50%;
-  transform: scale(2.35) translate(8%, 4%);
+  transform: scale(3.9) translate(5.5%, 6.5%);
   will-change: transform;
-  animation: intro-camera-zoomout 1350ms cubic-bezier(0.22, 1, 0.36, 1) 1200ms forwards;
+  animation: intro-camera-zoomout 1800ms cubic-bezier(0.16, 1, 0.3, 1) 920ms forwards;
 }
 
 @keyframes intro-camera-zoomout {
-  0%   { transform: scale(2.35) translate(8%, 4%); }
+  0%   { transform: scale(3.9) translate(5.5%, 6.5%); }
+  78%  { transform: scale(0.94) translate(0, 0); }
   100% { transform: scale(1) translate(0, 0); }
 }
 
@@ -501,65 +504,131 @@ body {
   overflow: visible;
 }
 
+/* Eating arm: deeper scoop-to-mouth arc across 3 hearty bites */
 .intro-diner-arm-eat {
   transform-origin: 0px 0px;
-  animation: intro-eat-arm 1020ms cubic-bezier(0.42, 0, 0.28, 1) 80ms 3 forwards;
+  animation: intro-eat-arm 1040ms cubic-bezier(0.42, 0, 0.28, 1) 60ms 3 forwards;
 }
 
 @keyframes intro-eat-arm {
-  0%   { transform: translate(-2px, 3px) rotate(6.8deg); }
-  38%  { transform: translate(0px, 0px) rotate(0deg); }
-  55%  { transform: translate(0px, 0px) rotate(-0.8deg); }
-  78%  { transform: translate(-1.5px, 2px) rotate(4.8deg); }
+  0%   { transform: translate(-3.5px, 4.5px) rotate(8.8deg); }
+  36%  { transform: translate(0px, 0px) rotate(0deg); }
+  52%  { transform: translate(1px, -1px) rotate(-1.5deg); }
+  76%  { transform: translate(-2px, 3px) rotate(5.8deg); }
   100% { transform: translate(0px, 0px) rotate(0deg); }
 }
 
+/* Food bite: full dumpling on lift, shrinks as bitten, replenishes */
 .intro-diner-bite {
   transform-origin: 0px 0px;
-  animation: intro-eat-bite 1020ms cubic-bezier(0.42, 0, 0.28, 1) 80ms 3 forwards;
+  animation: intro-eat-bite 1040ms cubic-bezier(0.42, 0, 0.28, 1) 60ms 3 forwards;
 }
 
 @keyframes intro-eat-bite {
-  0%, 34% { transform: scale(1); }
-  56%     { transform: scale(0.44); }
-  78%     { transform: scale(0.76); }
+  0%, 32% { transform: scale(1.06); }
+  54%     { transform: scale(0.32); }
+  76%     { transform: scale(0.78); }
   100%    { transform: scale(1); }
 }
 
+/* Head: leans into fork, tilts back in delight on bite, chews happily */
 .intro-diner-head {
   transform-origin: 0px 0px;
-  animation: intro-eat-head 1020ms ease-in-out 80ms 3 forwards;
+  animation: intro-eat-head 1040ms ease-in-out 60ms 3 forwards;
 }
 
 @keyframes intro-eat-head {
-  0%   { transform: translateY(1px) rotate(2.2deg); }
-  38%  { transform: translateY(0px) rotate(0deg); }
-  62%  { transform: translateY(-1px) rotate(-2.2deg); }
-  82%  { transform: translateY(0.5px) rotate(1.1deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
+  0%   { transform: translateY(1.8px) rotate(2.8deg) scale(1); }
+  36%  { transform: translateY(0px) rotate(0deg) scale(1); }
+  56%  { transform: translateY(-2px) rotate(-3.2deg) scale(1.025); }
+  78%  { transform: translateY(0.8px) rotate(1.6deg) scale(0.995); }
+  100% { transform: translateY(0px) rotate(0deg) scale(1); }
 }
 
+/* Torso & resting arm: happy shoulder bounce from table baseline */
+.intro-diner-body {
+  transform-origin: 0px 0px;
+  animation: intro-body-bounce 1040ms ease-in-out 60ms 3 forwards;
+}
+
+@keyframes intro-body-bounce {
+  0%, 30% { transform: scaleY(0.99) translateY(0px); }
+  54%     { transform: scaleY(1.028) translateY(-2px); }
+  78%     { transform: scaleY(0.995) translateY(0px); }
+  100%    { transform: scaleY(1) translateY(0px); }
+}
+
+/* Savour / delight burst rays & jade spark beside the head */
+.intro-delight-burst {
+  transform-origin: 0px 0px;
+  opacity: 0;
+  animation: intro-delight-pop 1040ms cubic-bezier(0.22, 1, 0.36, 1) 60ms 3 forwards;
+}
+
+@keyframes intro-delight-pop {
+  0%, 34% { transform: scale(0.35) rotate(-10deg); opacity: 0; }
+  52%     { transform: scale(1.12) rotate(0deg);   opacity: 1; }
+  74%     { transform: scale(0.95) rotate(4deg);   opacity: 0.85; }
+  100%    { transform: scale(0.9)  rotate(0deg);   opacity: 0; }
+}
+
+/* Steaming bowl waves, rising aroma puffs & warm bowl pulse */
 .intro-steam-wave {
   transform-origin: 0px 0px;
-  animation: intro-steam-rise 1350ms ease-in-out infinite;
+  animation: intro-steam-rise 1200ms ease-in-out infinite;
 }
 .intro-steam-wave-2 {
-  animation-delay: 420ms;
+  animation-delay: 380ms;
 }
 
 @keyframes intro-steam-rise {
-  0%, 100% { transform: translate(0px, 2px) scaleY(0.95); opacity: 0.72; }
-  50%      { transform: translate(1.4px, -6px) scaleY(1.06); opacity: 1; }
+  0%, 100% { transform: translate(-1px, 3px) scaleY(0.92); opacity: 0.7; }
+  50%      { transform: translate(2px, -8px) scaleY(1.08); opacity: 1; }
 }
 
+.intro-aroma-puff {
+  transform-origin: 0px 0px;
+  animation: intro-aroma-float 1300ms ease-out infinite;
+}
+.intro-aroma-puff-2 {
+  animation-delay: 520ms;
+}
+
+@keyframes intro-aroma-float {
+  0%   { transform: translateY(8px) scale(0.5);  opacity: 0; }
+  45%  { opacity: 0.9; }
+  100% { transform: translateY(-16px) scale(1.2); opacity: 0; }
+}
+
+.intro-bowl-body {
+  transform-origin: 0px 31px;
+  animation: intro-bowl-bounce 1040ms ease-in-out 60ms 3 forwards;
+}
+
+@keyframes intro-bowl-bounce {
+  0%      { transform: scale(1.04, 0.96); }
+  35%, 100% { transform: scale(1, 1); }
+}
+
+/* Mug liquid slosh & warm tea steam wisp */
 .intro-diner-liquid {
   transform-origin: 0px 0px;
-  animation: intro-liquid-sway 1800ms ease-in-out infinite;
+  animation: intro-liquid-sway 1400ms ease-in-out infinite;
 }
 
 @keyframes intro-liquid-sway {
-  0%, 100% { transform: rotate(-1.2deg); }
-  50%      { transform: rotate(1.2deg); }
+  0%, 100% { transform: rotate(-2.2deg) translateY(0px); }
+  50%      { transform: rotate(2.2deg) translateY(-1px); }
+}
+
+.intro-mug-steam {
+  transform-origin: 0px 0px;
+  animation: intro-mug-wisp 1500ms ease-in-out infinite;
+}
+
+@keyframes intro-mug-wisp {
+  0%, 100% { transform: translateY(2px) scaleY(0.9); opacity: 0.35; }
+  50%      { transform: translateY(-5px) scaleY(1.08); opacity: 0.85; }
 }
 
 /* ── ACT II: Separate Final Logo & Restaurant Name Card ───── */
@@ -607,7 +676,7 @@ body {
   stroke-linecap: round;
   stroke-dasharray: 351.86; /* 2πr, r = 56 */
   stroke-dashoffset: 351.86;
-  animation: intro-scribe 820ms cubic-bezier(0.65, 0, 0.35, 1) 3400ms forwards;
+  animation: intro-scribe 820ms cubic-bezier(0.65, 0, 0.35, 1) 3550ms forwards;
 }
 
 @keyframes intro-scribe {
@@ -622,7 +691,7 @@ body {
   box-shadow: 0 18px 44px rgba(6, 78, 46, 0.26);
   transform: scale(0.2);
   opacity: 0;
-  animation: intro-bloom 720ms cubic-bezier(0.34, 1.3, 0.5, 1) 3700ms forwards;
+  animation: intro-bloom 720ms cubic-bezier(0.34, 1.3, 0.5, 1) 3850ms forwards;
 }
 
 @keyframes intro-bloom {
@@ -639,7 +708,7 @@ body {
   color: #ffffff;
   transform: translateY(5px) scale(0.86);
   opacity: 0;
-  animation: intro-glyph-up 640ms cubic-bezier(0.22, 1, 0.36, 1) 3820ms forwards;
+  animation: intro-glyph-up 640ms cubic-bezier(0.22, 1, 0.36, 1) 3970ms forwards;
 }
 
 @keyframes intro-glyph-up {
@@ -668,7 +737,7 @@ body {
   transform: translateY(150%);
   opacity: 0;
   animation: intro-rise 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: calc(3950ms + var(--i) * 40ms);
+  animation-delay: calc(4100ms + var(--i) * 40ms);
 }
 
 .intro-sp {
@@ -688,7 +757,7 @@ body {
   margin: clamp(18px, 2.6vw, 26px) 0 clamp(14px, 2vw, 20px);
   background: linear-gradient(90deg, rgba(21, 128, 61, 0) 0%, #15803d 50%, rgba(21, 128, 61, 0) 100%);
   transform: scaleX(0);
-  animation: intro-rule-open 660ms cubic-bezier(0.65, 0, 0.35, 1) 4550ms forwards;
+  animation: intro-rule-open 660ms cubic-bezier(0.65, 0, 0.35, 1) 4700ms forwards;
 }
 
 @keyframes intro-rule-open {
@@ -704,7 +773,7 @@ body {
   text-indent: 0.39em;
   color: rgba(10, 10, 10, 0.7);
   opacity: 0;
-  animation: intro-sub-in 760ms cubic-bezier(0.22, 1, 0.36, 1) 4750ms forwards;
+  animation: intro-sub-in 760ms cubic-bezier(0.22, 1, 0.36, 1) 4900ms forwards;
 }
 
 @keyframes intro-sub-in {
@@ -761,7 +830,12 @@ body {
   .intro-diner-arm-eat,
   .intro-diner-bite,
   .intro-diner-head,
+  .intro-diner-body,
+  .intro-delight-burst,
   .intro-steam-wave,
-  .intro-diner-liquid { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
+  .intro-aroma-puff,
+  .intro-bowl-body,
+  .intro-diner-liquid,
+  .intro-mug-steam { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
   .site-behind-intro { filter: none; transform: none; }
 }
