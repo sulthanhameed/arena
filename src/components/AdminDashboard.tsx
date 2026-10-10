@@ -1,27 +1,26 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { adminApi, type KhangOrder } from "../lib/api";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import type { OrderStatus } from "../types/database.types";
 import { CloseIcon } from "./Icons";
-
-interface AdminOrder {
-  _id: string;
-  orderId: string;
-  customer?: { name?: string; email?: string };
-  total: number;
-  status: string;
-  payment: { status: string; method: string };
-  createdAt: string;
-}
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-const STATUSES = ["received", "preparing", "out_for_delivery", "delivered", "cancelled"];
+const STATUSES: OrderStatus[] = [
+  "received",
+  "preparing",
+  "out_for_delivery",
+  "delivered",
+  "cancelled",
+];
 
 export default function AdminDashboard({ open, onClose }: Props) {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [orders, setOrders] = useState<KhangOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,27 +32,39 @@ export default function AdminDashboard({ open, onClose }: Props) {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!open || user?.role !== "admin") return;
+  // Admins are allowed to read every order by RLS policy — no admin endpoint needed.
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    import("../lib/api")
-      .then(async () => {
-        // Direct fetch to admin endpoint
-        const token = localStorage.getItem("khang_token");
-        const baseUrl =
-          (import.meta as ImportMeta & { env: Record<string, string> }).env
-            .VITE_API_URL || "http://localhost:5000/api";
-        const res = await fetch(`${baseUrl}/orders`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Failed to load orders");
-        const data = await res.json();
-        setOrders(data.orders);
+    try {
+      setOrders(await adminApi.orders());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open || user?.role !== "admin") return;
+    if (!isSupabaseConfigured) {
+      setError("Supabase is not configured — set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+      return;
+    }
+    void load();
+
+    // Live dashboard: Supabase Realtime pushes new/updated orders instantly
+    const channel = supabase
+      .channel("admin-orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        void load();
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [open, user]);
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [open, user, load]);
 
   if (!open) return null;
 
@@ -63,22 +74,15 @@ export default function AdminDashboard({ open, onClose }: Props) {
     .reduce((s, o) => s + o.total, 0);
   const pending = orders.filter((o) => o.status !== "delivered" && o.status !== "cancelled").length;
 
-  const updateStatus = async (id: string, status: string) => {
-    const token = localStorage.getItem("khang_token");
-    const baseUrl =
-      (import.meta as ImportMeta & { env: Record<string, string> }).env
-        .VITE_API_URL || "http://localhost:5000/api";
-    await fetch(`${baseUrl}/orders/${id}/status`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status }),
-    });
-    setOrders((prev) =>
-      prev.map((o) => (o._id === id ? { ...o, status } : o)),
-    );
+  const updateStatus = async (id: string, status: OrderStatus) => {
+    const previous = orders;
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+    try {
+      await adminApi.setStatus(id, status);
+    } catch (err) {
+      setOrders(previous); // roll back if the RPC rejected it
+      setError(err instanceof Error ? err.message : "Could not update the order");
+    }
   };
 
   return (
@@ -152,11 +156,11 @@ export default function AdminDashboard({ open, onClose }: Props) {
                         <tbody>
                           {orders.map((o) => (
                             <tr
-                              key={o._id}
+                              key={o.id}
                               className="border-b border-khang-ink/5 font-body text-[13px]"
                             >
                               <td className="py-3 pr-3 font-mono font-semibold text-khang-red">
-                                {o.orderId}
+                                {o.order_number}
                               </td>
                               <td className="py-3 pr-3">
                                 <div className="font-display font-semibold">
@@ -178,7 +182,9 @@ export default function AdminDashboard({ open, onClose }: Props) {
                               <td className="py-3 pr-3">
                                 <select
                                   value={o.status}
-                                  onChange={(e) => updateStatus(o._id, e.target.value)}
+                                  onChange={(e) =>
+                                    void updateStatus(o.id, e.target.value as OrderStatus)
+                                  }
                                   className="rounded-full border border-khang-ink/15 bg-white px-3 py-1 font-mono text-[11px] uppercase tracking-wider"
                                 >
                                   {STATUSES.map((s) => (
@@ -189,7 +195,7 @@ export default function AdminDashboard({ open, onClose }: Props) {
                                 </select>
                               </td>
                               <td className="py-3 font-mono text-xs text-zinc-500">
-                                {new Date(o.createdAt).toLocaleDateString()}
+                                {new Date(o.created_at).toLocaleDateString()}
                               </td>
                             </tr>
                           ))}

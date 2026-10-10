@@ -1,10 +1,26 @@
 node_modules
+dist
 .next
+
+# Environment
 .env
+.env.local
 .env.production
-backend/node_modules
-backend/.env
 frontend/node_modules
 frontend/.next
 frontend/.env
 frontend/.env.production
+
+# Supabase CLI local state
+supabase/.branches
+supabase/.temp
+supabase/.env
+supabase/.env.local
+
+# Database dumps produced by database/scripts/backup.sh
+backups/
+*.dump
+
+# Deno / Edge Function local caches
+supabase/functions/node_modules
+supabase/functions/deno.lock

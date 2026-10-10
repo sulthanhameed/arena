@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { FoodItem } from "./data/menu";
 import { CartProvider, useCart } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
+import { MenuProvider } from "./context/MenuContext";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import FeaturedCarousel from "./components/FeaturedCarousel";
@@ -20,6 +21,10 @@ import AuthModal from "./components/AuthModal";
 import AdminDashboard from "./components/AdminDashboard";
 import ScrollProgressBar from "./components/ScrollProgressBar";
 import { CartIcon } from "./components/Icons";
+import IntroEntrance, {
+  shouldSkipIntro,
+  type IntroPhase,
+} from "./components/IntroEntrance";
 
 function FloatingCartButton() {
   const { count, openCart, total } = useCart();
@@ -76,11 +81,32 @@ function Shell() {
 }
 
 export default function App() {
+  /* The entrance sits over the site rather than instead of it: the
+     page mounts and loads underneath while the lockup assembles, so
+     by the time the ink clears the menu is already there. The two
+     classes hold it back (blurred, a shade large) and release it. */
+  const [introPhase, setIntroPhase] = useState<IntroPhase>(() =>
+    shouldSkipIntro() ? "done" : "playing",
+  );
+  const onPhaseChange = useCallback((p: IntroPhase) => setIntroPhase(p), []);
+
+  const held = introPhase === "playing";
+  const releasing = introPhase === "exiting";
+
   return (
     <AuthProvider>
-      <CartProvider>
-        <Shell />
-      </CartProvider>
+      <MenuProvider>
+        <CartProvider>
+          <div
+            className={
+              held ? "site-behind-intro" : releasing ? "site-released" : undefined
+            }
+          >
+            <Shell />
+          </div>
+          <IntroEntrance onPhaseChange={onPhaseChange} />
+        </CartProvider>
+      </MenuProvider>
     </AuthProvider>
   );
 }

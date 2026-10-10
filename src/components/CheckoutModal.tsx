@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { CheckIcon, CloseIcon } from "./Icons";
+import { isSupabaseConfigured } from "../lib/supabase";
 
 interface Props {
   open: boolean;
@@ -17,7 +18,7 @@ const PAYMENTS = [
 
 export default function CheckoutModal({ open, onClose }: Props) {
   const { total, count, lines, clear, closeCart } = useCart();
-  const { user } = useAuth();
+  const { user, openAuth } = useAuth();
   const [step, setStep] = useState<"form" | "success">("form");
   const [orderId, setOrderId] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -54,10 +55,32 @@ export default function CheckoutModal({ open, onClose }: Props) {
     setError(null);
     setProcessing(true);
 
+    // Offline demo mode — no Supabase project configured
+    if (!isSupabaseConfigured) {
+      await new Promise((r) => setTimeout(r, 600));
+      setOrderId(
+        "KH-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000),
+      );
+      setStep("success");
+      setTimeout(() => clear(), 500);
+      setProcessing(false);
+      return;
+    }
+
+    // Orders are tied to an authenticated user (RLS + create_order RPC)
+    if (!user) {
+      setError("Please sign in to place your order.");
+      setProcessing(false);
+      openAuth("login");
+      return;
+    }
+
     try {
-      // Try the real backend + payment gateway flow
+      // Supabase: rpc('create_order') → Edge Function → payment widget
       const { runCheckout } = await import("../lib/payments");
       const result = await runCheckout({
+        // `l.item.id` is a legacy menu code ('dim-001'); create_order() also
+        // accepts a product uuid or slug.
         items: lines.map((l) => ({ product: l.item.id, qty: l.qty })),
         customer: { name: form.name, phone: form.phone },
         address: { line1: form.address },
@@ -72,16 +95,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
         throw new Error(result.error || "Payment failed");
       }
     } catch (err) {
-      // Backend not configured — fall back to demo mode (offline)
-      console.warn("Falling back to offline demo:", err);
-      const id =
-        "KH-" +
-        new Date().getFullYear() +
-        "-" +
-        Math.floor(1000 + Math.random() * 9000);
-      setOrderId(id);
-      setStep("success");
-      setTimeout(() => clear(), 500);
+      setError(err instanceof Error ? err.message : "Checkout failed");
     } finally {
       setProcessing(false);
     }

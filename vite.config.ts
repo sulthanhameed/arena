@@ -16,4 +16,15 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  // Vite answers 403 to any Host it does not recognise, which is every
+  // cloud preview URL. Needed for the sandbox preview; harmless on Vercel,
+  // which serves the built `dist/` and never runs this server.
+  server: {
+    host: true,
+    allowedHosts: [".e2b.app", "localhost"],
+  },
+  preview: {
+    host: true,
+    allowedHosts: [".e2b.app", "localhost"],
+  },
 });

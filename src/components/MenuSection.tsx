@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { CATEGORIES, MENU, type Category, type FoodItem } from "../data/menu";
+import type { Category, FoodItem } from "../data/menu";
+import { useMenu } from "../context/MenuContext";
 import FoodCard from "./FoodCard";
 import Categories from "./Categories";
 import SectionHeading from "./SectionHeading";
@@ -11,19 +12,26 @@ interface Props {
 }
 
 export default function MenuSection({ onView }: Props) {
+  const { menu, categories, loading, error, source } = useMenu();
   const [active, setActive] = useState<Category | "All">("All");
   const [sort, setSort] = useState<"popular" | "low" | "high">("popular");
 
   const items = useMemo(() => {
-    let arr = active === "All" ? MENU : MENU.filter((m) => m.category === active);
+    let arr = active === "All" ? menu : menu.filter((m) => m.category === active);
     if (sort === "popular") arr = [...arr].sort((a, b) => b.rating - a.rating);
     if (sort === "low") arr = [...arr].sort((a, b) => a.price - b.price);
     if (sort === "high") arr = [...arr].sort((a, b) => b.price - a.price);
     return arr;
-  }, [active, sort]);
+  }, [menu, active, sort]);
 
   return (
-    <section id="menu" className="relative bg-white">
+    <section
+      id="menu"
+      className="relative bg-white"
+      data-menu-source={source}
+      data-menu-loading={loading ? "1" : "0"}
+      data-menu-count={items.length}
+    >
       {/* Heading */}
       <div className="mx-auto max-w-7xl px-4 pt-24 sm:px-6 sm:pt-32 lg:px-8">
         <SectionHeading
@@ -80,8 +88,28 @@ export default function MenuSection({ onView }: Props) {
           </div>
         </div>
 
+        {/* Where this menu actually came from. Silent on the happy path:
+            only speaks up while loading, or when Supabase was configured
+            and we had to fall back to the bundled copy. */}
+        {loading && (
+          <div className="mt-10 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.25em] text-zinc-400">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-khang-red" />
+            Loading the menu from Supabase…
+          </div>
+        )}
+        {!loading && error && source === "offline" && (
+          <div className="mt-10 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 font-body text-[13px] leading-relaxed text-amber-900">
+            <span className="font-semibold">Showing the bundled menu.</span>{" "}
+            Supabase is configured but the dishes could not be loaded — {error}
+          </div>
+        )}
+
         {/* Grid — each card reveals on scroll with a quick stagger */}
-        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div
+          className={`mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${
+            loading ? "opacity-50" : ""
+          }`}
+        >
           {items.map((item, i) => (
             <Reveal
               key={item.id}
@@ -128,7 +156,7 @@ export default function MenuSection({ onView }: Props) {
             </div>
 
             <Reveal variant="left" delay={300} duration={650} className="flex flex-wrap gap-2 md:justify-end">
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <button
                   key={c.name}
                   onClick={() => setActive(c.name)}
