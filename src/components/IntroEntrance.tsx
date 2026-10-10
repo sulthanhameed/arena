@@ -2,21 +2,26 @@ import { useCallback, useEffect, useState } from "react";
 
 /**
  * ─────────────────────────────────────────────────────────────
- *  Khang entrance — white-canvas diner & brand reveal
+ *  Khang entrance — two-act white-canvas intro
  * ─────────────────────────────────────────────────────────────
  *
- *  Choreography (~5.35s total):
+ *  Act I — The Diner Eating (0.00s – 3.55s):
  *    0.00s  the black curtain opens into a crisp white background
- *    0.15s  close-up on the diner eating hot food from the steaming
+ *    0.08s  close-up on the person eating hot food from the steaming
  *           bowl (fork lifts bite to mouth, head nods, steam curls)
  *    1.25s  camera smoothly zooms out to show the full person at the
- *           table on the white background
- *    1.40s  above the diner, the ring scribes clockwise, the green
- *           medallion blooms with 康, Khang Dimsum lifts letter by
- *           letter in ink black, the rule opens, and CHINESE RESTAURANT
- *           settles in
- *    2.85s  full lockup + full diner hold together on white
- *    4.55s  the stage lifts away and opens onto the live site
+ *           table centered on the white background
+ *    2.50s  full person holds on white while finishing their bite
+ *    3.05s  the diner scene fades and scales away cleanly
+ *
+ *  Act II — The Logo & Name (3.40s – 7.15s, separate final card):
+ *    3.40s  the ring scribes clockwise in the centre of the screen
+ *    3.70s  the green medallion blooms inside it and 康 rises
+ *    3.95s  Khang Dimsum lifts letter by letter from behind a mask
+ *    4.55s  a hairline rule opens out from the centre
+ *    4.75s  CHINESE RESTAURANT settles in from wide tracking
+ *    5.35s  the finished lockup holds
+ *    6.35s  it lifts away and opens onto the live site
  */
 
 export type IntroPhase = "playing" | "exiting" | "done";
@@ -32,7 +37,7 @@ const PLAY_ONCE_PER_SESSION = false;
 const SESSION_KEY = "khang_intro_played";
 
 /** EXIT_MS must match the `.is-opening` animation duration in index.css. */
-const HOLD_MS = 4550;
+const HOLD_MS = 6350;
 const EXIT_MS = 800;
 
 const NAME = "Khang Dimsum";
@@ -135,35 +140,13 @@ export default function IntroEntrance({ onPhaseChange }: Props) {
       data-intro-root=""
       data-intro-phase={phase}
     >
-      {/* White backdrop + opening black-to-white curtain transition */}
+      {/* Crisp white backdrop + opening black-to-white curtain transition */}
       <div className="intro-veil" />
       <div className="intro-black-curtain" />
 
-      {/* Camera stage: starts zoomed in on the eating person, then zooms out
-          to reveal the full person at the table + brand lockup on white */}
-      <div className="intro-stage">
-        <div className="intro-lockup">
-          {/* ─── The mark: a ring that scribes, a disc that blooms ─── */}
-          <div className="intro-mark">
-            <svg className="intro-ring" viewBox="0 0 120 120" aria-hidden="true">
-              <circle className="intro-ring-path" cx="60" cy="60" r="56" />
-            </svg>
-            <span className="intro-disc" />
-            <span className="intro-glyph">康</span>
-          </div>
-
-          {/* ─── The name, lifting out from behind a mask ─── */}
-          <div className="intro-name">
-            <span className="intro-line">{letters}</span>
-          </div>
-
-          <span className="intro-rule" />
-
-          <div className="intro-sub">Chinese Restaurant</div>
-        </div>
-
-        {/* ─── The diner eating at the table (animated vector pictogram) ─── */}
-        <div className="intro-diner-wrap">
+      {/* ─── ACT I: The Diner Eating + Camera Zoom-Out on White ─── */}
+      <div className="intro-scene-diner">
+        <div className="intro-diner-camera">
           <svg
             className="intro-diner"
             viewBox="0 0 600 440"
@@ -279,6 +262,29 @@ export default function IntroEntrance({ onPhaseChange }: Props) {
               </g>
             </g>
           </svg>
+        </div>
+      </div>
+
+      {/* ─── ACT II: Separate Final Logo & Restaurant Name Card ─── */}
+      <div className="intro-scene-brand">
+        <div className="intro-lockup">
+          {/* The mark: a ring that scribes, a disc that blooms */}
+          <div className="intro-mark">
+            <svg className="intro-ring" viewBox="0 0 120 120" aria-hidden="true">
+              <circle className="intro-ring-path" cx="60" cy="60" r="56" />
+            </svg>
+            <span className="intro-disc" />
+            <span className="intro-glyph">康</span>
+          </div>
+
+          {/* The name, lifting out from behind a mask */}
+          <div className="intro-name">
+            <span className="intro-line">{letters}</span>
+          </div>
+
+          <span className="intro-rule" />
+
+          <div className="intro-sub">Chinese Restaurant</div>
         </div>
       </div>
     </div>

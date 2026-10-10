@@ -420,11 +420,12 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   ENTRANCE INTRO
-   Opens from black into crisp white, starting zoomed in on the
-   diner eating hot food from the steaming bowl, then smoothly
-   zooming out to reveal the full person at the table and the
-   Khang Dimsum brand lockup above on the white background.
+   ENTRANCE INTRO — TWO SEPARATE SCENES
+   Act I  (0.00s – 3.52s): Black opens to white; close-up on the
+          person eating hot food from the steaming bowl, then
+          smoothly zooming out to show the full person on white.
+   Act II (3.40s – 7.15s): Separate final title card presenting
+          the Khang Dimsum logo and name centered on screen.
    ───────────────────────────────────────────────────────────── */
 .intro-root {
   position: fixed;
@@ -442,7 +443,7 @@ body {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(56% 44% at 50% 24%, rgba(22, 163, 74, 0.06) 0%, rgba(255, 255, 255, 0) 70%),
+    radial-gradient(56% 44% at 50% 46%, rgba(22, 163, 74, 0.06) 0%, rgba(255, 255, 255, 0) 70%),
     #ffffff;
 }
 
@@ -450,6 +451,7 @@ body {
 .intro-black-curtain {
   position: absolute;
   inset: 0;
+  z-index: 3;
   background: #0a0a0a;
   pointer-events: none;
   animation: intro-black-to-white 520ms cubic-bezier(0.4, 0, 0.2, 1) 40ms forwards;
@@ -460,173 +462,36 @@ body {
   100% { opacity: 0; }
 }
 
-/* Camera stage: starts zoomed in on the diner eating food, then
-   smoothly zooms out so the full person & brand lockup are shown. */
-.intro-stage {
+/* ── ACT I: The Diner Eating + Zoom-Out on White ──────────── */
+.intro-scene-diner {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 4vh 6vw;
+  pointer-events: none;
+  animation: intro-diner-scene-out 470ms cubic-bezier(0.55, 0, 0.3, 1) 3050ms forwards;
+}
+
+@keyframes intro-diner-scene-out {
+  0%   { transform: scale(1);    opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0; }
+}
+
+.intro-diner-camera {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2vh 6vw;
+  width: clamp(300px, 62vh, 560px);
+  max-width: 90vw;
   transform-origin: 50% 50%;
-  transform: scale(2.45) translate(3%, -14%);
-  will-change: transform, opacity;
-  animation: intro-camera-zoomout 1550ms cubic-bezier(0.22, 1, 0.36, 1) 1250ms forwards;
+  transform: scale(2.35) translate(8%, 4%);
+  will-change: transform;
+  animation: intro-camera-zoomout 1350ms cubic-bezier(0.22, 1, 0.36, 1) 1200ms forwards;
 }
 
 @keyframes intro-camera-zoomout {
-  0%   { transform: scale(2.45) translate(3%, -14%); }
+  0%   { transform: scale(2.35) translate(8%, 4%); }
   100% { transform: scale(1) translate(0, 0); }
-}
-
-.intro-lockup {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-bottom: clamp(10px, 1.8vh, 20px);
-}
-
-/* ── The mark ─────────────────────────────────────────────── */
-.intro-mark {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: clamp(66px, 9.2vh, 92px);
-  height: clamp(66px, 9.2vh, 92px);
-  margin-bottom: clamp(10px, 1.6vh, 18px);
-}
-
-.intro-ring {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  transform: rotate(-90deg); /* start the stroke at twelve o'clock */
-}
-
-.intro-ring-path {
-  fill: none;
-  stroke: #15803d;
-  stroke-width: 3.2;
-  stroke-linecap: round;
-  stroke-dasharray: 351.86; /* 2πr, r = 56 */
-  stroke-dashoffset: 351.86;
-  animation: intro-scribe 820ms cubic-bezier(0.65, 0, 0.35, 1) 1400ms forwards;
-}
-
-@keyframes intro-scribe {
-  to { stroke-dashoffset: 0; }
-}
-
-.intro-disc {
-  position: absolute;
-  inset: 7%;
-  border-radius: 9999px;
-  background: linear-gradient(145deg, #15803d 0%, #064e2e 100%);
-  box-shadow: 0 14px 34px rgba(6, 78, 46, 0.24);
-  transform: scale(0.2);
-  opacity: 0;
-  animation: intro-bloom 720ms cubic-bezier(0.34, 1.3, 0.5, 1) 1650ms forwards;
-}
-
-@keyframes intro-bloom {
-  0%   { transform: scale(0.2); opacity: 0; }
-  60%  { opacity: 1; }
-  100% { transform: scale(1);   opacity: 1; }
-}
-
-.intro-glyph {
-  position: relative;
-  font-family: var(--font-cn);
-  font-size: clamp(1.85rem, 4vh, 2.55rem);
-  line-height: 1;
-  color: #ffffff;
-  transform: translateY(5px) scale(0.86);
-  opacity: 0;
-  animation: intro-glyph-up 640ms cubic-bezier(0.22, 1, 0.36, 1) 1760ms forwards;
-}
-
-@keyframes intro-glyph-up {
-  to { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-/* ── The name (ink black on white) ────────────────────────── */
-.intro-name {
-  font-family: var(--font-brush);
-  font-weight: 600;
-  font-size: clamp(2.1rem, 5.8vh, 3.7rem);
-  line-height: 1.04;
-  letter-spacing: -0.015em;
-  color: #0a0a0a;
-}
-
-.intro-line {
-  display: inline-flex;
-  overflow: hidden;
-  padding: 0.2em 0.09em;
-  margin: -0.2em -0.09em;
-}
-
-.intro-ch {
-  display: inline-block;
-  transform: translateY(150%);
-  opacity: 0;
-  animation: intro-rise 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: calc(1850ms + var(--i) * 38ms);
-}
-
-.intro-sp {
-  display: inline-block;
-  width: 0.28em;
-}
-
-@keyframes intro-rise {
-  to { transform: translateY(0); opacity: 1; }
-}
-
-/* ── Rule and descriptor ──────────────────────────────────── */
-.intro-rule {
-  display: block;
-  width: clamp(110px, 16vw, 168px);
-  height: 1.5px;
-  margin: clamp(10px, 1.5vh, 16px) 0 clamp(8px, 1.2vh, 14px);
-  background: linear-gradient(90deg, rgba(21, 128, 61, 0) 0%, #15803d 50%, rgba(21, 128, 61, 0) 100%);
-  transform: scaleX(0);
-  animation: intro-rule-open 660ms cubic-bezier(0.65, 0, 0.35, 1) 2350ms forwards;
-}
-
-@keyframes intro-rule-open {
-  to { transform: scaleX(1); }
-}
-
-.intro-sub {
-  font-family: var(--font-mono);
-  font-size: clamp(0.6rem, 1.25vh, 0.78rem);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.78em;
-  text-indent: 0.39em;
-  color: rgba(10, 10, 10, 0.68);
-  opacity: 0;
-  animation: intro-sub-in 760ms cubic-bezier(0.22, 1, 0.36, 1) 2550ms forwards;
-}
-
-@keyframes intro-sub-in {
-  0%   { opacity: 0; letter-spacing: 0.78em; text-indent: 0.39em; }
-  100% { opacity: 1; letter-spacing: 0.42em; text-indent: 0.21em; }
-}
-
-/* ── Diner eating animation ───────────────────────────────── */
-.intro-diner-wrap {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  width: clamp(270px, 48vh, 480px);
-  max-width: 88vw;
 }
 
 .intro-diner {
@@ -638,7 +503,7 @@ body {
 
 .intro-diner-arm-eat {
   transform-origin: 0px 0px;
-  animation: intro-eat-arm 1120ms cubic-bezier(0.42, 0, 0.28, 1) 80ms 3 forwards;
+  animation: intro-eat-arm 1020ms cubic-bezier(0.42, 0, 0.28, 1) 80ms 3 forwards;
 }
 
 @keyframes intro-eat-arm {
@@ -651,7 +516,7 @@ body {
 
 .intro-diner-bite {
   transform-origin: 0px 0px;
-  animation: intro-eat-bite 1120ms cubic-bezier(0.42, 0, 0.28, 1) 80ms 3 forwards;
+  animation: intro-eat-bite 1020ms cubic-bezier(0.42, 0, 0.28, 1) 80ms 3 forwards;
 }
 
 @keyframes intro-eat-bite {
@@ -663,7 +528,7 @@ body {
 
 .intro-diner-head {
   transform-origin: 0px 0px;
-  animation: intro-eat-head 1120ms ease-in-out 80ms 3 forwards;
+  animation: intro-eat-head 1020ms ease-in-out 80ms 3 forwards;
 }
 
 @keyframes intro-eat-head {
@@ -697,12 +562,162 @@ body {
   50%      { transform: rotate(1.2deg); }
 }
 
+/* ── ACT II: Separate Final Logo & Restaurant Name Card ───── */
+.intro-scene-brand {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.intro-lockup {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 6vw;
+  text-align: center;
+}
+
+/* ── The mark ─────────────────────────────────────────────── */
+.intro-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(88px, 13.5vw, 124px);
+  height: clamp(88px, 13.5vw, 124px);
+  margin-bottom: clamp(22px, 3.4vw, 34px);
+}
+
+.intro-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(-90deg); /* start the stroke at twelve o'clock */
+}
+
+.intro-ring-path {
+  fill: none;
+  stroke: #15803d;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 351.86; /* 2πr, r = 56 */
+  stroke-dashoffset: 351.86;
+  animation: intro-scribe 820ms cubic-bezier(0.65, 0, 0.35, 1) 3400ms forwards;
+}
+
+@keyframes intro-scribe {
+  to { stroke-dashoffset: 0; }
+}
+
+.intro-disc {
+  position: absolute;
+  inset: 7%;
+  border-radius: 9999px;
+  background: linear-gradient(145deg, #15803d 0%, #064e2e 100%);
+  box-shadow: 0 18px 44px rgba(6, 78, 46, 0.26);
+  transform: scale(0.2);
+  opacity: 0;
+  animation: intro-bloom 720ms cubic-bezier(0.34, 1.3, 0.5, 1) 3700ms forwards;
+}
+
+@keyframes intro-bloom {
+  0%   { transform: scale(0.2); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.intro-glyph {
+  position: relative;
+  font-family: var(--font-cn);
+  font-size: clamp(2.4rem, 4.2vw, 3.4rem);
+  line-height: 1;
+  color: #ffffff;
+  transform: translateY(5px) scale(0.86);
+  opacity: 0;
+  animation: intro-glyph-up 640ms cubic-bezier(0.22, 1, 0.36, 1) 3820ms forwards;
+}
+
+@keyframes intro-glyph-up {
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* ── The name (ink black on white) ────────────────────────── */
+.intro-name {
+  font-family: var(--font-brush);
+  font-weight: 600;
+  font-size: clamp(2.6rem, 8.2vw, 5.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  color: #0a0a0a;
+}
+
+.intro-line {
+  display: inline-flex;
+  overflow: hidden;
+  padding: 0.2em 0.09em;
+  margin: -0.2em -0.09em;
+}
+
+.intro-ch {
+  display: inline-block;
+  transform: translateY(150%);
+  opacity: 0;
+  animation: intro-rise 720ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(3950ms + var(--i) * 40ms);
+}
+
+.intro-sp {
+  display: inline-block;
+  width: 0.28em;
+}
+
+@keyframes intro-rise {
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ── Rule and descriptor ──────────────────────────────────── */
+.intro-rule {
+  display: block;
+  width: clamp(120px, 17vw, 190px);
+  height: 1.5px;
+  margin: clamp(18px, 2.6vw, 26px) 0 clamp(14px, 2vw, 20px);
+  background: linear-gradient(90deg, rgba(21, 128, 61, 0) 0%, #15803d 50%, rgba(21, 128, 61, 0) 100%);
+  transform: scaleX(0);
+  animation: intro-rule-open 660ms cubic-bezier(0.65, 0, 0.35, 1) 4550ms forwards;
+}
+
+@keyframes intro-rule-open {
+  to { transform: scaleX(1); }
+}
+
+.intro-sub {
+  font-family: var(--font-mono);
+  font-size: clamp(0.64rem, 1.35vw, 0.84rem);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.78em;
+  text-indent: 0.39em;
+  color: rgba(10, 10, 10, 0.7);
+  opacity: 0;
+  animation: intro-sub-in 760ms cubic-bezier(0.22, 1, 0.36, 1) 4750ms forwards;
+}
+
+@keyframes intro-sub-in {
+  0%   { opacity: 0; letter-spacing: 0.78em; text-indent: 0.39em; }
+  100% { opacity: 1; letter-spacing: 0.42em; text-indent: 0.21em; }
+}
+
 /* ── Hand-over ────────────────────────────────────────────── */
 .intro-root.is-opening {
   pointer-events: none;
   background: transparent;
 }
-.is-opening .intro-stage {
+.is-opening .intro-lockup {
   animation: intro-lockup-out 620ms cubic-bezier(0.55, 0, 0.3, 1) forwards;
 }
 .is-opening .intro-veil {
@@ -711,7 +726,7 @@ body {
 
 @keyframes intro-lockup-out {
   0%   { transform: translateY(0) scale(1);        opacity: 1; }
-  100% { transform: translateY(-18px) scale(1.03); opacity: 0; }
+  100% { transform: translateY(-22px) scale(1.04); opacity: 0; }
 }
 @keyframes intro-veil-out {
   0%   { opacity: 1; }
@@ -734,8 +749,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .intro-black-curtain { display: none; }
-  .intro-stage,
+  .intro-black-curtain,
+  .intro-scene-diner { display: none; }
+  .intro-diner-camera,
   .intro-ring-path,
   .intro-disc,
   .intro-glyph,
