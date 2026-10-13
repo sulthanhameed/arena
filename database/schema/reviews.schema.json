@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Review",
+  "description": "A customer review of a product (1 per user per product)",
+  "type": "object",
+  "required": ["user", "product", "rating", "text"],
+  "properties": {
+    "_id": { "type": "string" },
+    "user": { "type": "string", "description": "User ObjectId" },
+    "product": { "type": "string", "description": "Product ObjectId" },
+    "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "text": { "type": "string", "minLength": 1, "maxLength": 1000 },
+    "userName": { "type": "string", "description": "Snapshot at review time" },
+    "location": { "type": "string", "description": "City, optional" },
+    "verified": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the user has actually ordered this dish"
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

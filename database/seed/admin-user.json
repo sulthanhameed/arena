@@ -1,0 +1,7 @@
+{
+  "name": "Admin",
+  "email": "admin@khang.com",
+  "password": "admin123",
+  "role": "admin",
+  "comment": "Default admin user. Password is hashed by Mongoose pre-save hook (bcrypt 10 rounds). CHANGE THIS IN PRODUCTION."
+}

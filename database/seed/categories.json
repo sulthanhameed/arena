@@ -1,0 +1,7 @@
+[
+  { "name": "Dim Sum", "slug": "dim-sum", "icon": "🥟", "sortOrder": 1 },
+  { "name": "Noodles & Soups", "slug": "noodles-soups", "icon": "🍜", "sortOrder": 2 },
+  { "name": "Rice & Curry", "slug": "rice-curry", "icon": "🍛", "sortOrder": 3 },
+  { "name": "Snacks", "slug": "snacks", "icon": "🍟", "sortOrder": 4 },
+  { "name": "Drinks", "slug": "drinks", "icon": "🥤", "sortOrder": 5 }
+]

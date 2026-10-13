@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Order",
+  "description": "A customer order with payment + tracking",
+  "type": "object",
+  "required": ["orderId", "user", "items", "subtotal", "tax", "total", "payment"],
+  "properties": {
+    "_id": { "type": "string" },
+    "orderId": {
+      "type": "string",
+      "pattern": "^KH-\\d{4}-\\d{4}$",
+      "description": "Human-friendly ID like KH-2026-0042"
+    },
+    "user": { "type": "string", "description": "User ObjectId" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["product", "qty"],
+        "properties": {
+          "product": { "type": "string", "description": "Product ObjectId" },
+          "name": { "type": "string", "description": "Snapshot at order time" },
+          "chineseName": { "type": "string" },
+          "image": { "type": "string" },
+          "price": { "type": "number", "description": "Snapshot at order time" },
+          "qty": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "customer": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" }
+      }
+    },
+    "address": {
+      "type": "object",
+      "properties": {
+        "line1": { "type": "string" },
+        "line2": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "pincode": { "type": "string" }
+      }
+    },
+    "subtotal": { "type": "number", "minimum": 0 },
+    "tax": { "type": "number", "minimum": 0, "description": "5% of subtotal" },
+    "delivery": { "type": "number", "minimum": 0, "description": "0 if subtotal > 500" },
+    "discount": { "type": "number", "minimum": 0, "default": 0 },
+    "total": { "type": "number", "minimum": 0 },
+    "payment": {
+      "type": "object",
+      "required": ["method", "status"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["upi", "card", "wallet", "cod", "stripe", "razorpay"]
+        },
+        "gateway": {
+          "type": "string",
+          "enum": ["razorpay", "stripe", "cod", "none"],
+          "default": "none"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "paid", "failed", "refunded"],
+          "default": "pending"
+        },
+        "razorpayOrderId": { "type": "string" },
+        "razorpayPaymentId": { "type": "string" },
+        "razorpaySignature": { "type": "string" },
+        "stripePaymentIntentId": { "type": "string" },
+        "stripeClientSecret": { "type": "string" },
+        "paidAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["received", "preparing", "out_for_delivery", "delivered", "cancelled"],
+      "default": "received"
+    },
+    "tracking": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": ["received", "preparing", "out_for_delivery", "delivered", "cancelled"]
+          },
+          "note": { "type": "string" },
+          "at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "estimatedDelivery": { "type": "string", "format": "date-time" },
+    "deliveredAt": { "type": "string", "format": "date-time" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  }
+}

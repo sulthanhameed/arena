@@ -1,0 +1,39 @@
+# Render.com Blueprint — deploy this with one click
+# Usage:
+#   1. Push this repo to GitHub
+#   2. In Render dashboard → New → Blueprint → select repo
+#   3. Add the required env vars (MONGO_URI, JWT_SECRET, RAZORPAY_*, STRIPE_*)
+
+services:
+  - type: web
+    name: khang-api
+    env: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: CLIENT_URL
+        value: https://khang.vercel.app
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: MONGO_URI
+        sync: false # set manually in dashboard
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
