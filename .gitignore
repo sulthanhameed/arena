@@ -1,0 +1,10 @@
+node_modules
+.next
+.env
+.env.production
+backend/node_modules
+backend/.env
+frontend/node_modules
+frontend/.next
+frontend/.env
+frontend/.env.production
