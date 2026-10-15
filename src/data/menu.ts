@@ -1,5 +1,5 @@
-// Menu data inspired by Khang Chinese Restaurant & Dimsum
-// Curated from the 6 menu items referenced on the Instagram page
+// Curated fallback menu and source for the initial Supabase seed.
+// MenuContext replaces it with the Postgres menu when Supabase is configured.
 export type Category = "Dim Sum" | "Noodles & Soups" | "Rice & Curry" | "Snacks" | "Drinks";
 
 export interface FoodItem {

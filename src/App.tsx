@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FoodItem } from "./data/menu";
 import { CartProvider, useCart } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
+import { MenuProvider } from "./context/MenuContext";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import FeaturedCarousel from "./components/FeaturedCarousel";
@@ -78,9 +79,11 @@ function Shell() {
 export default function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <Shell />
-      </CartProvider>
+      <MenuProvider>
+        <CartProvider>
+          <Shell />
+        </CartProvider>
+      </MenuProvider>
     </AuthProvider>
   );
 }

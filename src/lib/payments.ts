@@ -1,6 +1,6 @@
 /**
  * High-level payment orchestrator — handles Razorpay / Stripe / COD flows
- * by calling the backend, then opening the appropriate gateway widget.
+ * through the Supabase Edge Function, then opens the gateway widget.
  */
 import { ordersApi, paymentsApi, type CreateOrderBody } from "./api";
 import { openRazorpayCheckout } from "./razorpay";
@@ -13,7 +13,7 @@ export interface PaymentResult {
 
 /**
  * Full checkout flow:
- *   1. Create an order on the backend (server recalculates totals)
+ *   1. Create an order through Supabase (server recalculates totals)
  *   2. Depending on payment method, either:
  *      • COD → done
  *      • UPI/Wallet → Razorpay popup

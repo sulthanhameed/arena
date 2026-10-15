@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { CATEGORIES, MENU, type Category, type FoodItem } from "../data/menu";
+import { type Category, type FoodItem } from "../data/menu";
+import { useMenu } from "../context/MenuContext";
 import FoodCard from "./FoodCard";
 import Categories from "./Categories";
 import SectionHeading from "./SectionHeading";
@@ -11,16 +12,17 @@ interface Props {
 }
 
 export default function MenuSection({ onView }: Props) {
+  const { menu, categories } = useMenu();
   const [active, setActive] = useState<Category | "All">("All");
   const [sort, setSort] = useState<"popular" | "low" | "high">("popular");
 
   const items = useMemo(() => {
-    let arr = active === "All" ? MENU : MENU.filter((m) => m.category === active);
+    let arr = active === "All" ? menu : menu.filter((item) => item.category === active);
     if (sort === "popular") arr = [...arr].sort((a, b) => b.rating - a.rating);
     if (sort === "low") arr = [...arr].sort((a, b) => a.price - b.price);
     if (sort === "high") arr = [...arr].sort((a, b) => b.price - a.price);
     return arr;
-  }, [active, sort]);
+  }, [active, menu, sort]);
 
   return (
     <section id="menu" className="relative bg-white">
@@ -128,7 +130,7 @@ export default function MenuSection({ onView }: Props) {
             </div>
 
             <Reveal variant="left" delay={300} duration={650} className="flex flex-wrap gap-2 md:justify-end">
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <button
                   key={c.name}
                   onClick={() => setActive(c.name)}

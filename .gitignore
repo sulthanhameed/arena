@@ -2,9 +2,12 @@ node_modules
 .next
 .env
 .env.production
-backend/node_modules
-backend/.env
 frontend/node_modules
 frontend/.next
 frontend/.env
 frontend/.env.production
+
+# Supabase local CLI state and function secrets
+supabase/.temp/
+supabase/.branches/
+supabase/.env

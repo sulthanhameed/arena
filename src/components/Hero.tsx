@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { MENU, type FoodItem } from "../data/menu";
+import { useEffect, useState } from "react";
+import type { FoodItem } from "../data/menu";
+import { useMenu } from "../context/MenuContext";
 import { FlameIcon, StarIcon } from "./Icons";
 
 // Fixed position slots — center + 4 around
@@ -18,21 +19,26 @@ const SLOT_POS: Record<Slot, { left: number; top: number; size: number; z: numbe
   br:     { left: 400, top: 400, size:  96, z: 30 },
 };
 
-export default function Hero() {
-  // Top 5 featured for the showcase
-  const featured = MENU.filter((m) => m.featured);
-  const pool = [...featured].sort((a, b) => b.rating - a.rating).slice(0, 5);
+function featuredSlots(items: FoodItem[]): Record<Slot, FoodItem> {
+  const featured = items
+    .filter((item) => item.featured)
+    .sort((left, right) => right.rating - left.rating);
+  const pool = (featured.length >= 5 ? featured : [...items].sort((left, right) => right.rating - left.rating))
+    .slice(0, 5);
+  return { center: pool[0], tr: pool[1], bl: pool[2], tl: pool[3], br: pool[4] };
+}
 
-  // Map slot -> food item — same slots, but we'll key each rendered dish by its ID
-  // so React keeps the SAME DOM node across re-renders, letting CSS transition
-  // its position from old slot to new slot smoothly.
-  const [slots, setSlots] = useState<Record<Slot, FoodItem>>({
-    center: pool[0],
-    tr: pool[1],
-    bl: pool[2],
-    tl: pool[3],
-    br: pool[4],
-  });
+export default function Hero() {
+  const { menu } = useMenu();
+
+  // Map slot -> food item — the seeded static menu is available on first paint,
+  // then this updates when the Supabase menu is loaded.
+  const [slots, setSlots] = useState<Record<Slot, FoodItem>>(() => featuredSlots(menu));
+
+  useEffect(() => {
+    setSlots(featuredSlots(menu));
+  }, [menu]);
+  const pool = Object.values(slots);
   const [animating, setAnimating] = useState(false);
   const [highlightId, setHighlightId] = useState<string | null>(null);
 

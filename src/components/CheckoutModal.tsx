@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { isSupabaseConfigured } from "../lib/supabase";
 import { CheckIcon, CloseIcon } from "./Icons";
 
 interface Props {
@@ -52,10 +53,16 @@ export default function CheckoutModal({ open, onClose }: Props) {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setProcessing(true);
 
+    if (isSupabaseConfigured && !user) {
+      setError("Please sign in before placing an order.");
+      return;
+    }
+
+    setProcessing(true);
     try {
-      // Try the real backend + payment gateway flow
+      // The Supabase Edge Function recalculates totals and keeps payment keys
+      // on the server before the Razorpay popup is opened.
       const { runCheckout } = await import("../lib/payments");
       const result = await runCheckout({
         items: lines.map((l) => ({ product: l.item.id, qty: l.qty })),
@@ -72,8 +79,12 @@ export default function CheckoutModal({ open, onClose }: Props) {
         throw new Error(result.error || "Payment failed");
       }
     } catch (err) {
-      // Backend not configured — fall back to demo mode (offline)
-      console.warn("Falling back to offline demo:", err);
+      if (isSupabaseConfigured) {
+        setError(err instanceof Error ? err.message : "Checkout failed");
+        return;
+      }
+
+      // A preview without public Supabase variables stays a visual demo only.
       const id =
         "KH-" +
         new Date().getFullYear() +

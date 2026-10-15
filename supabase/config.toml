@@ -1,0 +1,41 @@
+# Local Supabase configuration for Khang.
+# Start locally with: npx supabase start
+project_id = "khang"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://127.0.0.1:5173", "http://localhost:5173"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+# Keep local development friction-free. Turn this on in the Supabase dashboard
+# when your production email templates and redirect URLs are ready.
+enable_confirmations = false
+
+[functions.api]
+# Public menu and payment webhooks reach this function without a user JWT.
+# The function verifies every protected route itself with Supabase Auth.
+verify_jwt = false

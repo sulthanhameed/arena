@@ -1,16 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { ordersApi, type KhangOrder } from "../lib/api";
 import { CloseIcon } from "./Icons";
 
-interface AdminOrder {
-  _id: string;
-  orderId: string;
-  customer?: { name?: string; email?: string };
-  total: number;
-  status: string;
-  payment: { status: string; method: string };
-  createdAt: string;
-}
+type AdminOrder = KhangOrder;
 
 interface Props {
   open: boolean;
@@ -35,25 +28,28 @@ export default function AdminDashboard({ open, onClose }: Props) {
 
   useEffect(() => {
     if (!open || user?.role !== "admin") return;
+    let active = true;
     setLoading(true);
     setError(null);
-    import("../lib/api")
-      .then(async () => {
-        // Direct fetch to admin endpoint
-        const token = localStorage.getItem("khang_token");
-        const baseUrl =
-          (import.meta as ImportMeta & { env: Record<string, string> }).env
-            .VITE_API_URL || "http://localhost:5000/api";
-        const res = await fetch(`${baseUrl}/orders`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Failed to load orders");
-        const data = await res.json();
-        setOrders(data.orders);
+
+    void ordersApi
+      .listAll()
+      .then(({ orders: loadedOrders }) => {
+        if (active) setOrders(loadedOrders);
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [open, user]);
+      .catch((err: unknown) => {
+        if (active) {
+          setError(err instanceof Error ? err.message : "Failed to load orders");
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [open, user?.role]);
 
   if (!open) return null;
 
@@ -63,22 +59,16 @@ export default function AdminDashboard({ open, onClose }: Props) {
     .reduce((s, o) => s + o.total, 0);
   const pending = orders.filter((o) => o.status !== "delivered" && o.status !== "cancelled").length;
 
-  const updateStatus = async (id: string, status: string) => {
-    const token = localStorage.getItem("khang_token");
-    const baseUrl =
-      (import.meta as ImportMeta & { env: Record<string, string> }).env
-        .VITE_API_URL || "http://localhost:5000/api";
-    await fetch(`${baseUrl}/orders/${id}/status`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status }),
-    });
-    setOrders((prev) =>
-      prev.map((o) => (o._id === id ? { ...o, status } : o)),
-    );
+  const updateStatus = async (id: string, status: KhangOrder["status"]) => {
+    try {
+      setError(null);
+      const { order } = await ordersApi.updateStatus(id, status);
+      setOrders((previous) =>
+        previous.map((existing) => (existing._id === id ? order : existing)),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update the order");
+    }
   };
 
   return (
@@ -178,7 +168,12 @@ export default function AdminDashboard({ open, onClose }: Props) {
                               <td className="py-3 pr-3">
                                 <select
                                   value={o.status}
-                                  onChange={(e) => updateStatus(o._id, e.target.value)}
+                                  onChange={(e) =>
+                                    updateStatus(
+                                      o._id,
+                                      e.target.value as KhangOrder["status"],
+                                    )
+                                  }
                                   className="rounded-full border border-khang-ink/15 bg-white px-3 py-1 font-mono text-[11px] uppercase tracking-wider"
                                 >
                                   {STATUSES.map((s) => (

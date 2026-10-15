@@ -6,6 +6,13 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
+import {
+  authApi,
+  clearToken,
+  isSupabaseConfigured,
+  setToken,
+  type KhangUser,
+} from "../lib/api";
 
 export interface User {
   name: string;
@@ -35,25 +42,74 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 const STORAGE_KEY = "khang_user";
 
+function fromSupabaseUser(user: KhangUser): User {
+  return {
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    joinedAt: user.createdAt || new Date().toISOString(),
+  };
+}
+
+function demoUser(name: string, email: string, phone?: string): User {
+  return {
+    name,
+    email,
+    phone,
+    role: email.toLowerCase() === "admin@khang.com" ? "admin" : "user",
+    joinedAt: new Date().toISOString(),
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
 
-  // Restore session from localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setUser(JSON.parse(raw));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const persist = (u: User | null) => {
-    if (u) localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+  const persist = (value: User | null) => {
+    if (value) localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
     else localStorage.removeItem(STORAGE_KEY);
   };
+
+  // Supabase owns production session recovery. The local visual-demo fallback
+  // is used only when no public Supabase project variables were supplied.
+  useEffect(() => {
+    let active = true;
+
+    const restore = async () => {
+      if (!isSupabaseConfigured) {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw && active) setUser(JSON.parse(raw));
+        } catch {
+          // Ignore an invalid old demo value.
+        }
+        return;
+      }
+
+      try {
+        const { user: sessionUser } = await authApi.me();
+        if (!active) return;
+        const restored = fromSupabaseUser(sessionUser);
+        setUser(restored);
+        persist(restored);
+      } catch {
+        // An expired session must never be treated as an authenticated demo user
+        // once a real Supabase project is configured.
+        clearToken();
+        if (active) {
+          setUser(null);
+          persist(null);
+        }
+      }
+    };
+
+    void restore();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const openAuth = useCallback((mode: "login" | "signup" = "login") => {
     setAuthMode(mode);
@@ -63,68 +119,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const closeAuth = useCallback(() => setIsAuthOpen(false), []);
 
   const login = useCallback(async (email: string, password: string) => {
-    // Try real backend first; fall back to demo mode if API is unreachable
-    try {
-      const { authApi, setToken } = await import("../lib/api");
-      const { token, user: u } = await authApi.login({ email, password });
+    if (isSupabaseConfigured) {
+      const { token, user: authenticatedUser } = await authApi.login({ email, password });
       setToken(token);
-      const usr: User = {
-        name: u.name,
-        email: u.email,
-        phone: u.phone,
-        role: u.role,
-        joinedAt: new Date().toISOString(),
-      };
-      setUser(usr);
-      persist(usr);
+      const nextUser = fromSupabaseUser(authenticatedUser);
+      setUser(nextUser);
+      persist(nextUser);
       setIsAuthOpen(false);
       return;
-    } catch {
-      // Backend unreachable → demo fallback. Treat admin@khang.com as admin in demo mode.
-      await new Promise((r) => setTimeout(r, 400));
-      const name = email.split("@")[0].replace(/[._-]/g, " ");
-      const u: User = {
-        name: name.charAt(0).toUpperCase() + name.slice(1),
-        email,
-        role: email.toLowerCase() === "admin@khang.com" ? "admin" : "user",
-        joinedAt: new Date().toISOString(),
-      };
-      setUser(u);
-      persist(u);
-      setIsAuthOpen(false);
     }
+
+    // Keep the unauthenticated design preview usable before a developer adds
+    // VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY. This branch is never used
+    // for a configured application.
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    const displayName = email.split("@")[0].replace(/[._-]/g, " ");
+    const nextUser = demoUser(
+      displayName.charAt(0).toUpperCase() + displayName.slice(1),
+      email,
+    );
+    setUser(nextUser);
+    persist(nextUser);
+    setIsAuthOpen(false);
   }, []);
 
   const signup = useCallback(
     async (name: string, email: string, password: string, phone?: string) => {
-      try {
-        const { authApi, setToken } = await import("../lib/api");
-        const { token, user: u } = await authApi.signup({ name, email, password, phone });
-        setToken(token);
-        const usr: User = {
-          name: u.name,
-          email: u.email,
-          phone: u.phone,
-          role: u.role,
-          joinedAt: new Date().toISOString(),
-        };
-        setUser(usr);
-        persist(usr);
-        setIsAuthOpen(false);
-        return;
-      } catch {
-        // Fallback
-        await new Promise((r) => setTimeout(r, 500));
-        const u: User = {
+      if (isSupabaseConfigured) {
+        const { token, user: authenticatedUser } = await authApi.signup({
           name,
           email,
+          password,
           phone,
-          joinedAt: new Date().toISOString(),
-        };
-        setUser(u);
-        persist(u);
+        });
+        setToken(token);
+        const nextUser = fromSupabaseUser(authenticatedUser);
+        setUser(nextUser);
+        persist(nextUser);
         setIsAuthOpen(false);
+        return;
       }
+
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      const nextUser = demoUser(name, email, phone);
+      setUser(nextUser);
+      persist(nextUser);
+      setIsAuthOpen(false);
     },
     [],
   );
@@ -132,8 +172,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     persist(null);
-    // Clear API token if present
-    import("../lib/api").then(({ clearToken }) => clearToken()).catch(() => {});
+    clearToken();
+    if (isSupabaseConfigured) {
+      void authApi.logout().catch(() => {
+        // Local UI state is already safely cleared if the network is offline.
+      });
+    }
   }, []);
 
   return (
