@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#fdfdfb"/>
+  <g opacity="0.58" fill="none" stroke="#1a1a18" stroke-linecap="round">
+    <path d="M70 134V72h62" stroke-width="1.25" opacity="0.3"/>
+    <path d="M1210 586v62h-62" stroke-width="1.25" opacity="0.3"/>
+    <path d="M95 106h96" stroke-width="1" opacity="0.12"/>
+    <path d="M1185 614h-96" stroke-width="1" opacity="0.12"/>
+    <circle cx="640" cy="332" r="310" stroke-width="1" opacity="0.055"/>
+    <circle cx="640" cy="332" r="246" stroke-width="1" opacity="0.075" stroke-dasharray="3 13"/>
+  </g>
+
+  <g transform="translate(640 284.5037) scale(1)" opacity="1">
+    <circle r="107" fill="#ffffff" stroke="#1a1a18" stroke-width="1.5"/>
+    <circle r="91" fill="none" stroke="#1a1a18" stroke-width="1" opacity="0.25" stroke-dasharray="9 10" stroke-dashoffset="0"/>
+    <g transform="translate(0 -1.708)" fill="none" stroke="#a9413a" stroke-width="5" stroke-linecap="round">
+      <path d="M-37 -46c-12 16-12 30 0 43"/>
+      <path d="M0 -57c-12 18-12 35 0 50"/>
+      <path d="M37 -46c-12 16-12 30 0 43"/>
+    </g>
+    <g fill="none" stroke="#1a1a18" stroke-linecap="round">
+      <path d="M-56 38c9-31 33-48 56-48s47 17 56 48" stroke-width="5"/>
+      <path d="M-48 39h96" stroke-width="3" opacity="0.75"/>
+      <path d="M-38 54h76" stroke-width="2.5" opacity="0.4"/>
+    </g>
+    <text x="0" y="29" text-anchor="middle" font-family="DejaVu Serif, serif" font-size="54" font-weight="700" fill="#1a1a18">K</text>
+  </g>
+
+  <g text-anchor="middle">
+    <text x="640" y="112" font-family="DejaVu Sans, sans-serif" font-size="12" font-weight="700" letter-spacing="6" fill="#a9413a" opacity="1">WELCOME TO</text>
+    <text x="640" y="453" font-family="DejaVu Serif, serif" font-size="124" font-style="italic" font-weight="700" letter-spacing="-7" fill="#1a1a18" opacity="1">Khang</text>
+    <g opacity="1" fill="#1a1a18">
+      <path d="M434 504h106" stroke="#1a1a18" stroke-width="1.5" opacity="0.32"/>
+      <path d="M740 504h106" stroke="#1a1a18" stroke-width="1.5" opacity="0.32"/>
+      <text x="640" y="510" font-family="DejaVu Sans, sans-serif" font-size="18" font-weight="700" letter-spacing="12">DIM SUM</text>
+      <text x="640" y="548" font-family="DejaVu Sans, sans-serif" font-size="14" font-weight="700" letter-spacing="5" fill="#a9413a">CHINESE RESTAURANT</text>
+    </g>
+    <text x="640" y="612" font-family="DejaVu Sans, sans-serif" font-size="12" font-weight="600" letter-spacing="3" fill="#6f6f6a" opacity="1">AUTHENTIC FLAVOURS · WARM HOSPITALITY</text>
+  </g>
+
+  <g opacity="0.28" fill="#a9413a">
+    <circle cx="314" cy="483" r="2"/>
+    <circle cx="966" cy="483" r="2"/>
+  </g>
+</svg>
